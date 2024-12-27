@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.0.9</version>
+    </parent>
+
+    <groupId>io.github.mado</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+
+    <modules>
+        <module>spring-data-jdbc-core</module>
+        <module>spring-data-jdbc-converter</module>
+        <module>spring-data-jdbc-datasource</module>
+        <module>spring-data-jdbc-logging</module>
+        <module>spring-data-jdbc-observation</module>
+        <module>spring-boot-starter-jdbc</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2022.0.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
