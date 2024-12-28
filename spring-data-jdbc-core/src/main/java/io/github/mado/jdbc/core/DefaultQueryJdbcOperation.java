@@ -1,5 +1,6 @@
 package io.github.mado.jdbc.core;
 
+import io.github.mado.jdbc.core.excute.ArgumentPreparedStatementCreator;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -55,16 +56,17 @@ public class DefaultQueryJdbcOperation implements QueryJdbcOperation {
             Object key;
             KeyHolder keyHolder = new GeneratedKeyHolder();
             RelationalPersistentProperty id = generator.getId();
+            String[] keyNames = null;
             if (idGeneration.driverRequiresKeyColumnNames()) {
-                i = namedParameterJdbcTemplate.getJdbcTemplate().update(pair.getFirst(), pair.getSecond(), keyHolder, new String[]{id.getColumnName().getReference(identifierProcessing)});
-            }else {
-                i = namedParameterJdbcTemplate.getJdbcTemplate().update(pair.getFirst(), pair.getSecond(), keyHolder);
+                 keyNames = new String[]{id.getColumnName().getReference(identifierProcessing)};
             }
+            i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(pair.getFirst(), pair.getSecond(), keyHolder, keyNames));
             try {
                 key  = keyHolder.getKeyAs(id.getType());
             }catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
                 key = Optional.ofNullable(keyHolder.getKeys()).map(m -> m.get(id.getColumnName().toSql(identifierProcessing)));
             }
+            generator.persistentPropertyAccessor(entity).setProperty(id, key);
 
         }
         return i;
