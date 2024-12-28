@@ -1,11 +1,8 @@
 package io.github.mado.jdbc.core;
 
-import io.github.mado.jdbc.core.repository.PersistentRepository;
-import io.github.mado.jdbc.core.repository.QueryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.relational.core.query.Query;
 
 import java.util.Optional;
@@ -13,63 +10,46 @@ import java.util.Optional;
 /**
  * @author heng.ma
  */
-public class QueryJdbcOperation<T> implements QueryRepository<T, Query>, PersistentRepository<T, Query> {
+public interface QueryJdbcOperation {
 
-    private final JdbcAggregateTemplate jdbcAggregateTemplate;
-    private final Class<T> entityClass;
-    public QueryJdbcOperation(JdbcAggregateTemplate jdbcAggregateTemplate, Class<T> entityClass) {
-        this.jdbcAggregateTemplate = jdbcAggregateTemplate;
-        this.entityClass = entityClass;
+    <T> int insertSelective (T entity, Class<T> entityClass);
+
+    <T> long insertList (Iterable<T> entities, Class<T> entityClass);
+
+    <T> long updateByIdSelective (T entity, Class<T> entityClass);
+
+    <T> long updateSelective (T updater, Query query, Class<T> entityClass);
+
+    <T> long deleteAll (Query query, Class<T> entityClass);
+
+    /**
+     * select limit 1
+     */
+    <T>  Optional<T> findOne (Query query, Class<T> entityClass);
+
+    default <T> Optional<T> findOne (Query query, Sort sort, Class<T> entityClass) {
+        return findOne(query.sort(sort), entityClass);
     }
 
+    <T>  Iterable<T> findAll (Query query, Class<T> entityClass);
 
-    @Override
-    public Optional<T> findOne(Query query, Sort sort) {
-        return jdbcAggregateTemplate.findOne(query.sort(sort), entityClass);
+    default <T> Iterable<T> findAll (Query query, Sort sort, Class<T> entityClass) {
+        return findAll(query.sort(sort), entityClass);
     }
 
-    @Override
-    public Iterable<T> findAll(Query query, Sort sort) {
-        return jdbcAggregateTemplate.findAll(query.sort(sort), entityClass);
+    <T> Page<T> findAll (Query query, Pageable pageable, Class<T> entityClass);
+
+    default<T>  Iterable<T> findLimit (Query query, int limit, Class<T> entityClass) {
+        return findAll(query.limit(limit), entityClass);
     }
 
-    @Override
-    public Page<T> findAll(Query query, Pageable pageable) {
-        return jdbcAggregateTemplate.findAll(query, entityClass, pageable);
+    default <T> Iterable<T> findLimit (Query query, int limit, Sort sort, Class<T> entityClass) {
+        return findAll(query.limit(limit).sort(sort), entityClass);
     }
 
-    @Override
-    public Iterable<T> findLimit(Query query, int limit, Sort sort) {
-        return jdbcAggregateTemplate.findAll(query.limit(limit).sort(sort), entityClass);
-    }
+    <T> long count (Query query, Class<T> entityClass);
 
-    @Override
-    public long count(Query query) {
-        return jdbcAggregateTemplate.count(query, entityClass);
-    }
-
-    @Override
-    public int insertSelective(T entity) {
-        return 0;
-    }
-
-    @Override
-    public long insertList(Iterable<T> entities) {
-        return 0;
-    }
-
-    @Override
-    public long updateByIdSelective(T entity) {
-        return 0;
-    }
-
-    @Override
-    public long updateSelective(T updater, Query query) {
-        return 0;
-    }
-
-    @Override
-    public long deleteAll(Query query) {
-        return 0;
+    default<T>  boolean exists (Query query, Class<T> entityClass) {
+        return count(query, entityClass) > 0;
     }
 }
