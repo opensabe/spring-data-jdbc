@@ -33,6 +33,7 @@ public class GlobalSQLGeneratorSource {
     private final JdbcConverter converter;
     private final IdentifierProcessing identifierProcessing;
     private final PropertyAccessorCustomizer propertyAccessorCustomizer;
+    @SuppressWarnings("rawtypes")
     private final Map<Class<?>, Generator> generators = new ConcurrentHashMap<>();
     public GlobalSQLGeneratorSource(RelationalMappingContext context,
                               SqlRenderer sqlRenderer,
@@ -49,6 +50,7 @@ public class GlobalSQLGeneratorSource {
                 .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
     }
 
+    @SuppressWarnings("unchecked")
     <T> Generator<T> simpleSqlGenerator (Class<T> clazz) {
         return generators.computeIfAbsent(clazz, c -> {
             RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(c);
@@ -116,14 +118,13 @@ public class GlobalSQLGeneratorSource {
             return id;
         }
 
-        public RelationalPersistentEntity<T> getEntity() {
-            return entity;
-        }
 
+        @SuppressWarnings("unchecked")
         public PersistentPropertyAccessor<T> persistentPropertyAccessor (T instance) {
             return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
         }
 
+        @SuppressWarnings("unchecked")
         Triple<String, Object[], PersistentPropertyAccessor<T>> insertSelective (T instance) {
             StringBuilder sql = new StringBuilder("insert into ");
             sql.append(table.getName().toSql(identifierProcessing));
@@ -142,23 +143,23 @@ public class GlobalSQLGeneratorSource {
             sql.append("(");
             sql.append(Stream.generate(() -> "?").limit(args.size()).collect(Collectors.joining(",")));
             sql.append(")");
+
             return Triple.of(sql.toString(), args.toArray(), accessor);
         }
 
+        @SuppressWarnings("unchecked")
         Triple<String, Object[], Map<T, PersistentPropertyAccessor<T>>> insertList (Collection<T> instances) {
             int size = instances.size();
             Map<T, PersistentPropertyAccessor<T>> accessors = new IdentityHashMap<>(size);
             String params = Stream.generate(() -> "?").limit(insertColumns.size()).collect(Collectors.joining(","));
             String line = "(" + params + ")";
             String lines = Stream.generate(() -> line).limit(size).collect(Collectors.joining(","));
-            String sql = new StringBuilder(insertPrefix).append(lines).toString();
+            String sql = insertPrefix + lines;
             List<Object> args = new ArrayList<>(insertColumns.size() * size);
-            insertColumns.forEach(property -> {
-                instances.forEach(entity -> {
-                    PersistentPropertyAccessor<T> accessor = accessors.computeIfAbsent(entity, k -> persistentPropertyAccessor(k));
-                    args.add(accessor.getProperty(property));
-                });
-            });
+            insertColumns.forEach(property -> instances.forEach(entity -> {
+                PersistentPropertyAccessor<T> accessor = accessors.computeIfAbsent(entity, this::persistentPropertyAccessor);
+                args.add(accessor.getProperty(property));
+            }));
             return Triple.of(sql, args, accessors);
         }
 

@@ -11,7 +11,6 @@ import java.sql.*;
 public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementSetter implements PreparedStatementCreator, ParameterDisposer, SqlProvider {
 
     private final String sql;
-    private final Object [] args;
     private final KeyHolder keyHolder;
     private final String[] keyColumnNames;
 
@@ -22,7 +21,6 @@ public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementS
     public ArgumentPreparedStatementCreator(String sql, Object[] args, KeyHolder keyHolder, String[] keyColumnNames) {
         super(args);
         this.sql = sql;
-        this.args = args;
         this.keyHolder = keyHolder;
         this.keyColumnNames = keyColumnNames;
     }
@@ -56,8 +54,8 @@ public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementS
         }else if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && !updatableResults) {
             ps = con.prepareStatement(this.sql);
         } else {
-            ps = con.prepareStatement(this.sql, resultSetType,
-                    updatableResults ? ResultSet.CONCUR_UPDATABLE : ResultSet.CONCUR_READ_ONLY);
+            //noinspection MagicConstant
+            ps = con.prepareStatement(this.sql, resultSetType, updatableResults ? ResultSet.CONCUR_UPDATABLE : ResultSet.CONCUR_READ_ONLY);
         }
 
         setValues(ps);
