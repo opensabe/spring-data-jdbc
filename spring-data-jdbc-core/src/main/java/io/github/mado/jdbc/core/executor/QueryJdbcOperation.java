@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.core;
+package io.github.mado.jdbc.core.executor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

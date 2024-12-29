@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.core.excute;
+package io.github.mado.jdbc.core.executor;
 
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.ParameterDisposer;

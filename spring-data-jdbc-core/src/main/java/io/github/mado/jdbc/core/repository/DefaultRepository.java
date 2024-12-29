@@ -1,7 +1,7 @@
 package io.github.mado.jdbc.core.repository;
 
-import io.github.mado.jdbc.core.DefaultQueryJdbcOperation;
-import io.github.mado.jdbc.core.QueryJdbcOperation;
+import io.github.mado.jdbc.core.executor.DefaultQueryJdbcOperation;
+import io.github.mado.jdbc.core.executor.QueryJdbcOperation;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
