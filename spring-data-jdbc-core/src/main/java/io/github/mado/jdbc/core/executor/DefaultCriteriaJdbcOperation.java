@@ -114,7 +114,7 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
     }
 
     @Override
-    public <T> long updateByIdSelective(T entity, Class<T> entityClass) {
+    public <T> int updateByIdSelective(T entity, Class<T> entityClass) {
         GlobalSQLGeneratorSource.Generator<T> generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.updateByIdSelective(entity);
         return namedParameterJdbcTemplate.update(pair.getFirst(), pair.getSecond());
@@ -140,8 +140,10 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
     }
 
     @Override
-    public <T> Iterable<T> findAll(Query query, Class<T> entityClass) {
-        return jdbcAggregateTemplate.findAll(query, entityClass);
+    public <T> List<T> findAll(Query query, Class<T> entityClass) {
+        List<T> list =new ArrayList<>();
+        jdbcAggregateTemplate.findAll(query, entityClass).forEach(list::add);
+        return list;
     }
 
     @Override

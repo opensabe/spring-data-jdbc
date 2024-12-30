@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.common.test.repository.activity;
+package io.github.mado.jdbc.common.test.json.repository;
 
 
 import io.github.mado.jdbc.common.test.vo.Activity;

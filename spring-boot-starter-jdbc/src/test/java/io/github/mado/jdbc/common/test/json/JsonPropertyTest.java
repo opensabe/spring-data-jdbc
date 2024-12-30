@@ -1,6 +1,7 @@
-package io.github.mado.jdbc.common.test;
+package io.github.mado.jdbc.common.test.json;
 
-import io.github.mado.jdbc.common.test.repository.activity.ActivityRepository;
+import io.github.mado.jdbc.common.test.MySQLContainer;
+import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
 import io.github.mado.jdbc.common.test.vo.Activity;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import io.github.mado.jdbc.core.lambda.Weekend;
@@ -42,7 +43,7 @@ public class JsonPropertyTest {
             .withFixedExposedPort(3306, 3306);
 
 
-    @EnableJdbcRepositories("io.github.mado.jdbc.common.test.repository.activity")
+    @EnableJdbcRepositories
     @SpringBootApplication(scanBasePackages = "io.github.mado.jdbc.autoconfigure")
     public static class App {
 
