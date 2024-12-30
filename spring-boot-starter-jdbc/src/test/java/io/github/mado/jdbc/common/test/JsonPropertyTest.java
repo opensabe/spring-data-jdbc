@@ -4,7 +4,6 @@ import io.github.mado.jdbc.common.test.repository.activity.ActivityRepository;
 import io.github.mado.jdbc.common.test.vo.Activity;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import io.github.mado.jdbc.core.lambda.Weekend;
-import io.github.opensabe.common.testcontainers.CustomizedMySQLContainer;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,13 +38,9 @@ import java.util.Optional;
 public class JsonPropertyTest {
 
     @Container
-    final static CustomizedMySQLContainer mysql = new CustomizedMySQLContainer() {
+    final static MySQLContainer mysql = new MySQLContainer()
+            .withFixedExposedPort(3306, 3306);
 
-        public CustomizedMySQLContainer fixedExposedPort(int hostPort, int containerPort) {
-            super.addFixedExposedPort(hostPort, containerPort);
-            return this;
-        }
-    }.fixedExposedPort(3306, 3306);
 
     @EnableJdbcRepositories("io.github.mado.jdbc.common.test.repository.activity")
     @SpringBootApplication(scanBasePackages = "io.github.mado.jdbc.autoconfigure")

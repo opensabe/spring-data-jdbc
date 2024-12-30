@@ -54,28 +54,6 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.opensabe-tech</groupId>
-            <artifactId>common-testcontainers</artifactId>
-            <version>1.0.5.28</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.opensabe-tech</groupId>
-                    <artifactId>spring-framework-parent-common</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
     </dependencies>
 </project>
