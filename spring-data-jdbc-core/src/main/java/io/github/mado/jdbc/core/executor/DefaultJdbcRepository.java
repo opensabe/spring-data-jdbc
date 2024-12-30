@@ -218,26 +218,23 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public int deleteById(ID id) {
-        return 0;
+        return criteriaJdbcOperation.get().deleteById(id, clazz);
     }
 
 
     @Override
     public int deleteAllById(Iterable<ID> ids) {
-        //TODO
-        return 0;
+        return criteriaJdbcOperation.get().deleteAllById(ids, clazz);
     }
 
     @Override
     public int deleteAllById(ID... ids) {
-        //TODO
-        return 0;
+        return criteriaJdbcOperation.get().deleteAllById(ids, clazz);
     }
 
 
     @Override
     public long deleteAll() {
-        //TODO
-        return 0;
+        return criteriaJdbcOperation.get().deleteAll(clazz);
     }
 }

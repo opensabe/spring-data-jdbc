@@ -163,10 +163,11 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
     }
 
     @Override
-    public long deleteAllById(Iterable<Object> ids, Class<?> entityClass) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public int deleteAllById(Iterable<?> ids, Class<?> entityClass) {
         ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
 
-        Collection<Object> collection;
+        Collection collection;
         if (ids instanceof Collection c) {
             collection = c;
         }else {

@@ -4,7 +4,7 @@ public interface CustomerJdbcOperation extends CriteriaJdbcOperation {
 
     int deleteById (Object id, Class<?> entityClass);
 
-    long deleteAllById (Iterable<Object> ids, Class<?> entityClass);
+    int deleteAllById (Iterable<?> ids, Class<?> entityClass);
 
     long deleteAll (Class<?> entityClass);
 
