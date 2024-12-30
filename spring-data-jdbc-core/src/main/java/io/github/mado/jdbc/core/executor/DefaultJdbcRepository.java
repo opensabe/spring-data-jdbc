@@ -1,8 +1,7 @@
-package io.github.mado.jdbc.core.repository;
+package io.github.mado.jdbc.core.executor;
 
-import io.github.mado.jdbc.core.executor.CriteriaJdbcOperation;
-import io.github.mado.jdbc.core.executor.DefaultCriteriaJdbcOperation;
 import io.github.mado.jdbc.core.lambda.Weekend;
+import io.github.mado.jdbc.core.repository.BaseRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +22,7 @@ import java.util.Optional;
  */
 public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
-    private final Lazy<CriteriaJdbcOperation> criteriaJdbcOperation;
+    private final Lazy<CustomerJdbcOperation> criteriaJdbcOperation;
 
     private final JdbcAggregateOperations operations;
     private final RelationalExampleMapper exampleMapper;
@@ -34,7 +33,7 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
         this.operations = entityOperations;
         this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
         this.clazz = entity.getType();
-        this.criteriaJdbcOperation = Lazy.of(() -> DefaultCriteriaJdbcOperation.INSTANCE);
+        this.criteriaJdbcOperation = Lazy.of(() -> CustomerJdbcOperationImpl.INSTANCE);
     }
 
 
@@ -193,15 +192,13 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     }
 
     @Override
-    public boolean existsById(Weekend<T> weekend) {
-        //TODO
-        return false;
+    public boolean exists(Weekend<T> weekend) {
+        return criteriaJdbcOperation.get().exists(toQuery(weekend), weekend.getEntityClass());
     }
 
     @Override
-    public boolean existsById(Example<T> example) {
-        //TODO
-        return false;
+    public boolean exists(Example<T> example) {
+        return criteriaJdbcOperation.get().exists(toQuery(example), example.getProbeType());
     }
 
     @Override
@@ -221,7 +218,6 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public int deleteById(ID id) {
-        //TODO
         return 0;
     }
 

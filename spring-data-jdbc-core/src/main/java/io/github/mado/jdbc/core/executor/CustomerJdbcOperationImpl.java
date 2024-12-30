@@ -23,13 +23,13 @@ import java.util.*;
 /**
  * @author heng.ma
  */
-public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
+public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
-    public static DefaultCriteriaJdbcOperation INSTANCE;
+    public static CustomerJdbcOperationImpl INSTANCE;
 
     private final JdbcAggregateTemplate jdbcAggregateTemplate;
 
-    private final GlobalSQLGeneratorSource sqlGeneratorSource;
+    private final ExtendSQLGeneratorSource extendSQLGeneratorSource;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -37,10 +37,9 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
 
     private final IdentifierProcessing identifierProcessing;
 
-
-    public DefaultCriteriaJdbcOperation(JdbcAggregateTemplate jdbcAggregateTemplate, GlobalSQLGeneratorSource sqlGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
+    public CustomerJdbcOperationImpl(JdbcAggregateTemplate jdbcAggregateTemplate, ExtendSQLGeneratorSource extendSQLGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
         this.jdbcAggregateTemplate = jdbcAggregateTemplate;
-        this.sqlGeneratorSource = sqlGeneratorSource;
+        this.extendSQLGeneratorSource = extendSQLGeneratorSource;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.idGeneration = dialect.getIdGeneration();
          identifierProcessing = dialect.getIdentifierProcessing();
@@ -50,7 +49,7 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
 
     @Override
     public <T> int insertSelective(T entity, Class<T> entityClass) {
-        var generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
+        var generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Triple<String, Object[], PersistentPropertyAccessor<T>> triple = generator.insertSelective(entity);
         int i;
         if (IdValueSource.GENERATED.equals(generator.getIdValueSource())) {
@@ -78,7 +77,7 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
 
     @Override
     public <T> long insertList(Iterable<T> entities, Class<T> entityClass) {
-        var generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
+        var generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Collection<T> collection;
         if (entities instanceof Collection<T> c) {
             collection = c;
@@ -115,21 +114,21 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
 
     @Override
     public <T> int updateByIdSelective(T entity, Class<T> entityClass) {
-        GlobalSQLGeneratorSource.Generator<T> generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.updateByIdSelective(entity);
         return namedParameterJdbcTemplate.update(pair.getFirst(), pair.getSecond());
     }
 
     @Override
     public <T> long updateSelective(T updater, Query query, Class<T> entityClass) {
-        GlobalSQLGeneratorSource.Generator<T> generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.update(updater, query);
         return namedParameterJdbcTemplate.update(pair.getFirst(), pair.getSecond());
     }
 
     @Override
     public <T> long deleteAll(Query query, Class<T> entityClass) {
-        var generator = sqlGeneratorSource.simpleSqlGenerator(entityClass);
+        var generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.deleteAll(query);
         return namedParameterJdbcTemplate.update(pair.getFirst(), pair.getSecond());
     }
@@ -157,4 +156,36 @@ public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
     }
 
 
+    @Override
+    public int deleteById(Object id, Class<?> entityClass) {
+        ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        return namedParameterJdbcTemplate.getJdbcTemplate().update(generator.deleteById(), id);
+    }
+
+    @Override
+    public long deleteAllById(Iterable<Object> ids, Class<?> entityClass) {
+        ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+
+        Collection<Object> collection;
+        if (ids instanceof Collection c) {
+            collection = c;
+        }else {
+            collection = new ArrayList<>();
+            ids.forEach(collection::add);
+        }
+        String sql = generator.deleteByIds(collection.size());
+        return namedParameterJdbcTemplate.getJdbcTemplate().update(sql, collection.toArray());
+    }
+
+    @Override
+    public long deleteAll(Class<?> entityClass) {
+        ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        return namedParameterJdbcTemplate.getJdbcTemplate().update(generator.deleteAll());
+    }
+
+    @Override
+    public int deleteAllById(Object[] ids, Class<?> entityClass) {
+        ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        return namedParameterJdbcTemplate.getJdbcTemplate().update(generator.deleteByIds(ids.length), ids);
+    }
 }

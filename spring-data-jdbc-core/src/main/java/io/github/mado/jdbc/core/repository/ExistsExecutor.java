@@ -7,7 +7,7 @@ public interface ExistsExecutor<T, ID> {
 
     boolean existsById (ID id);
 
-    boolean existsById (Weekend<T>  weekend);
+    boolean exists (Weekend<T>  weekend);
 
-    boolean existsById (Example<T> example);
+    boolean exists (Example<T> example);
 }

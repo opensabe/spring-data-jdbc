@@ -7,9 +7,9 @@ import io.github.mado.jdbc.converter.extension.BigIntToIntegerConverter;
 import io.github.mado.jdbc.converter.extension.BigIntToLongConverter;
 import io.github.mado.jdbc.converter.extension.IntegerToBooleanConverter;
 import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;
-import io.github.mado.jdbc.core.executor.CriteriaJdbcOperation;
-import io.github.mado.jdbc.core.executor.DefaultCriteriaJdbcOperation;
-import io.github.mado.jdbc.core.executor.GlobalSQLGeneratorSource;
+import io.github.mado.jdbc.core.executor.CustomerJdbcOperation;
+import io.github.mado.jdbc.core.executor.CustomerJdbcOperationImpl;
+import io.github.mado.jdbc.core.executor.ExtendSQLGeneratorSource;
 import io.github.mado.jdbc.core.executor.PropertyAccessorCustomizer;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -45,14 +45,14 @@ public class ExtensionsConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public GlobalSQLGeneratorSource globalSQLGeneratorSource (RelationalMappingContext context, Dialect dialect, JdbcConverter converter, List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
-        return new GlobalSQLGeneratorSource(context, converter, dialect, propertyAccessorCustomizers);
+    public ExtendSQLGeneratorSource globalSQLGeneratorSource (RelationalMappingContext context, Dialect dialect, JdbcConverter converter, List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
+        return new ExtendSQLGeneratorSource(context, converter, dialect, propertyAccessorCustomizers);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public CriteriaJdbcOperation criteriaJdbcOperation (JdbcAggregateTemplate jdbcAggregateTemplate, GlobalSQLGeneratorSource sqlGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
-        return new DefaultCriteriaJdbcOperation(jdbcAggregateTemplate, sqlGeneratorSource, namedParameterJdbcTemplate, dialect);
+    public CustomerJdbcOperation criteriaJdbcOperation (JdbcAggregateTemplate jdbcAggregateTemplate, ExtendSQLGeneratorSource extendSQLGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
+        return new CustomerJdbcOperationImpl(jdbcAggregateTemplate, extendSQLGeneratorSource, namedParameterJdbcTemplate, dialect);
     }
 
     @Bean

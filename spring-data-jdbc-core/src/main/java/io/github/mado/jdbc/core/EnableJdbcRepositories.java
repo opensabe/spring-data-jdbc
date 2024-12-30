@@ -1,7 +1,7 @@
 package io.github.mado.jdbc.core;
 
 
-import io.github.mado.jdbc.core.repository.DefaultJdbcRepository;
+import io.github.mado.jdbc.core.executor.DefaultJdbcRepository;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.annotation.AliasFor;

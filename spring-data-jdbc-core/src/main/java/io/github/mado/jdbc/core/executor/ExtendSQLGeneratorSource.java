@@ -13,6 +13,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 /**
  * @author heng.ma
  */
-public class GlobalSQLGeneratorSource {
+public class ExtendSQLGeneratorSource {
 
     private final RelationalMappingContext context;
     private final SqlRenderer sqlRenderer;
@@ -35,7 +36,7 @@ public class GlobalSQLGeneratorSource {
     private final PropertyAccessorCustomizer propertyAccessorCustomizer;
     @SuppressWarnings("rawtypes")
     private final Map<Class<?>, Generator> generators = new ConcurrentHashMap<>();
-    public GlobalSQLGeneratorSource(RelationalMappingContext context,
+    public ExtendSQLGeneratorSource(RelationalMappingContext context,
                               JdbcConverter converter,
                               Dialect dialect,
                               List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
@@ -73,6 +74,19 @@ public class GlobalSQLGeneratorSource {
 
 
         private final String insertPrefix;
+
+
+
+
+        private final Lazy<String> deleteById = Lazy.of(this::getDeleteById);
+        private final Lazy<String> deleteAll = Lazy.of(this::getDeleteAll);
+
+
+
+
+
+
+
 
         Generator(RelationalPersistentEntity<T> entity, RowMapper<T> rowMapper) {
             this.entity = entity;
@@ -115,6 +129,26 @@ public class GlobalSQLGeneratorSource {
 
         public RelationalPersistentProperty getId() {
             return id;
+        }
+
+
+        public String deleteById () {
+            return deleteById.get();
+        }
+
+        public String deleteAll () {
+            return deleteAll.get();
+        }
+
+        public String deleteByIds (int count) {
+            StringBuilder sql = new StringBuilder("delete from ")
+                    .append(table.getReferenceName())
+                    .append(" where ")
+                    .append(id.getColumnName().toSql(identifierProcessing))
+                    .append(" in (");
+            String params = Stream.generate(() -> "?").limit(count).collect(Collectors.joining(","));
+            sql.append(params).append(")");
+            return sql.toString();
         }
 
 
@@ -219,6 +253,19 @@ public class GlobalSQLGeneratorSource {
             return IdValueSource.PROVIDED;
         }
 
+        private String getDeleteById () {
+            Delete delete = Delete.builder()
+                    .from(table)
+                    .where(table.column(id.getColumnName().getReference(identifierProcessing)).isEqualTo(SQL.bindMarker("?id")))
+                    .build();
+            return sqlRenderer.render(delete);
+        }
+        private String getDeleteAll () {
+            Delete delete = Delete.builder()
+                    .from(table)
+                    .build();
+            return sqlRenderer.render(delete);
+        }
 
     }
 
