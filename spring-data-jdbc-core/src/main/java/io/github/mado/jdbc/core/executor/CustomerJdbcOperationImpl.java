@@ -25,8 +25,6 @@ import java.util.*;
  */
 public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
-    public static CustomerJdbcOperationImpl INSTANCE;
-
     private final JdbcAggregateTemplate jdbcAggregateTemplate;
 
     private final ExtendSQLGeneratorSource extendSQLGeneratorSource;
@@ -43,7 +41,6 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.idGeneration = dialect.getIdGeneration();
          identifierProcessing = dialect.getIdentifierProcessing();
-        INSTANCE = this;
     }
 
 

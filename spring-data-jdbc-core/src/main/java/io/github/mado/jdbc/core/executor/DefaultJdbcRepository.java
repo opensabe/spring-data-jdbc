@@ -1,5 +1,6 @@
 package io.github.mado.jdbc.core.executor;
 
+import io.github.mado.jdbc.core.ApplicationContextHolder;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import io.github.mado.jdbc.core.repository.BaseRepository;
 import org.springframework.data.domain.Example;
@@ -23,24 +24,24 @@ import java.util.Optional;
 public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     private final Lazy<CustomerJdbcOperation> criteriaJdbcOperation;
+    private final Lazy<RelationalExampleMapper> exampleMapper;
 
     private final JdbcAggregateOperations operations;
-    private final RelationalExampleMapper exampleMapper;
 
     private final Class<T> clazz;
 
     public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
         this.operations = entityOperations;
-        this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
         this.clazz = entity.getType();
-        this.criteriaJdbcOperation = Lazy.of(() -> CustomerJdbcOperationImpl.INSTANCE);
+        this.exampleMapper = Lazy.of(() -> ApplicationContextHolder.getBean(RelationalExampleMapper.class));
+        this.criteriaJdbcOperation = Lazy.of(() -> ApplicationContextHolder.getBean(CustomerJdbcOperation.class));
     }
 
 
 
 
     private Query toQuery (Example<T> example) {
-        return exampleMapper.getMappedExample(example);
+        return exampleMapper.get().getMappedExample(example);
     }
 
     private Query toQuery (Weekend<T> weekend) {

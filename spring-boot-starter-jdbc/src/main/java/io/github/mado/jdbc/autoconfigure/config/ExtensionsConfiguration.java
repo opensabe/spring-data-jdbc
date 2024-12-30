@@ -7,6 +7,7 @@ import io.github.mado.jdbc.converter.extension.BigIntToIntegerConverter;
 import io.github.mado.jdbc.converter.extension.BigIntToLongConverter;
 import io.github.mado.jdbc.converter.extension.IntegerToBooleanConverter;
 import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;
+import io.github.mado.jdbc.core.ApplicationContextHolder;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperationImpl;
 import io.github.mado.jdbc.core.executor.ExtendSQLGeneratorSource;
@@ -30,6 +31,7 @@ import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -42,6 +44,17 @@ import java.util.function.Consumer;
  */
 @Configuration(proxyBeanMethods = false)
 public class ExtensionsConfiguration {
+
+    @Bean
+    public ApplicationContextHolder applicationHolder (ApplicationContext applicationContext) {
+        return new ApplicationContextHolder(applicationContext);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RelationalExampleMapper relationalExampleMapper (RelationalMappingContext context) {
+        return new RelationalExampleMapper(context);
+    }
 
     @Bean
     @ConditionalOnMissingBean
