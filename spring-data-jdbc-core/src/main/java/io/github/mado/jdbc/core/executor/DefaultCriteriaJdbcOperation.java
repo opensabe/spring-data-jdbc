@@ -23,9 +23,9 @@ import java.util.*;
 /**
  * @author heng.ma
  */
-public class DefaultQueryJdbcOperation implements QueryJdbcOperation {
+public class DefaultCriteriaJdbcOperation implements CriteriaJdbcOperation {
 
-    public static DefaultQueryJdbcOperation INSTANCE;
+    public static DefaultCriteriaJdbcOperation INSTANCE;
 
     private final JdbcAggregateTemplate jdbcAggregateTemplate;
 
@@ -38,7 +38,7 @@ public class DefaultQueryJdbcOperation implements QueryJdbcOperation {
     private final IdentifierProcessing identifierProcessing;
 
 
-    public DefaultQueryJdbcOperation(JdbcAggregateTemplate jdbcAggregateTemplate, GlobalSQLGeneratorSource sqlGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
+    public DefaultCriteriaJdbcOperation(JdbcAggregateTemplate jdbcAggregateTemplate, GlobalSQLGeneratorSource sqlGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
         this.jdbcAggregateTemplate = jdbcAggregateTemplate;
         this.sqlGeneratorSource = sqlGeneratorSource;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;

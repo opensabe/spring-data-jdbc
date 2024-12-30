@@ -1,12 +1,12 @@
 package io.github.mado.jdbc.core.executor;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -36,15 +36,14 @@ public class GlobalSQLGeneratorSource {
     @SuppressWarnings("rawtypes")
     private final Map<Class<?>, Generator> generators = new ConcurrentHashMap<>();
     public GlobalSQLGeneratorSource(RelationalMappingContext context,
-                              SqlRenderer sqlRenderer,
-                              QueryMapper queryMapper,
                               JdbcConverter converter,
                               Dialect dialect,
-                              ObjectProvider<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
+                              List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
         this.context = context;
-        this.sqlRenderer = sqlRenderer;
-        this.queryMapper = queryMapper;
         this.converter = converter;
+
+        this.queryMapper = new QueryMapper(dialect, converter);;
+        this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());;
         this.identifierProcessing = dialect.getIdentifierProcessing();
         this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
                 .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
@@ -104,7 +103,7 @@ public class GlobalSQLGeneratorSource {
 
             String inserts = insertColumns.stream().map(p -> p.getColumnName().getReference(identifierProcessing)).collect(Collectors.joining(","));
 
-            insert.append(inserts);
+            insert.append("(").append(inserts).append(")").append(" values ");
 
             this.insertPrefix = insert.toString();
         }
@@ -128,7 +127,7 @@ public class GlobalSQLGeneratorSource {
         Triple<String, Object[], PersistentPropertyAccessor<T>> insertSelective (T instance) {
             StringBuilder sql = new StringBuilder("insert into ");
             sql.append(table.getName().toSql(identifierProcessing));
-            sql.append(" ");
+            sql.append(" (");
             List<Object> args = new ArrayList<>(insertColumns.size());
             List<String> properties = new ArrayList<>(insertColumns.size());
             PersistentPropertyAccessor<T> accessor = persistentPropertyAccessor(instance);
@@ -140,7 +139,7 @@ public class GlobalSQLGeneratorSource {
                 }
             }
             sql.append(String.join(",", properties));
-            sql.append("(");
+            sql.append(") values (");
             sql.append(Stream.generate(() -> "?").limit(args.size()).collect(Collectors.joining(",")));
             sql.append(")");
 
@@ -156,11 +155,11 @@ public class GlobalSQLGeneratorSource {
             String lines = Stream.generate(() -> line).limit(size).collect(Collectors.joining(","));
             String sql = insertPrefix + lines;
             List<Object> args = new ArrayList<>(insertColumns.size() * size);
-            insertColumns.forEach(property -> instances.forEach(entity -> {
+            instances.forEach(entity -> insertColumns.forEach(property -> {
                 PersistentPropertyAccessor<T> accessor = accessors.computeIfAbsent(entity, this::persistentPropertyAccessor);
                 args.add(accessor.getProperty(property));
             }));
-            return Triple.of(sql, args, accessors);
+            return Triple.of(sql, args.toArray(), accessors);
         }
 
 
@@ -213,7 +212,7 @@ public class GlobalSQLGeneratorSource {
         }
 
         private IdValueSource idValueSource (RelationalPersistentProperty idProperty) {
-            if (Objects.nonNull(idProperty) && idProperty.isWritable()) {
+            if (Objects.nonNull(idProperty) && !idProperty.isWritable()) {
                 return IdValueSource.GENERATED;
             }
             //如果没@Id，也有可能是联合主键

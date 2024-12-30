@@ -1,7 +1,7 @@
 package io.github.mado.jdbc.core.repository;
 
-import io.github.mado.jdbc.core.executor.DefaultQueryJdbcOperation;
-import io.github.mado.jdbc.core.executor.QueryJdbcOperation;
+import io.github.mado.jdbc.core.executor.CriteriaJdbcOperation;
+import io.github.mado.jdbc.core.executor.DefaultCriteriaJdbcOperation;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -14,49 +14,55 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.util.Lazy;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 /**
  * @author heng.ma
  */
-public class DefaultRepository<T, ID> extends SimpleJdbcRepository<T, ID> implements BaseRepository<T, ID> {
+public class DefaultJdbcRepository<T, ID> extends SimpleJdbcRepository<T, ID> implements BaseRepository<T, ID> {
 
-    private final Lazy<QueryJdbcOperation> queryJdbcOperation;
+    private final Lazy<CriteriaJdbcOperation> queryJdbcOperation;
 
     private final RelationalExampleMapper exampleMapper;
 
     private final Class<T> entityClass;
 
-    public DefaultRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
+    public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
         super(entityOperations, entity, converter);
         this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
         this.entityClass = entity.getType();
-        this.queryJdbcOperation = Lazy.of(() -> DefaultQueryJdbcOperation.INSTANCE);
+        this.queryJdbcOperation = Lazy.of(() -> DefaultCriteriaJdbcOperation.INSTANCE);
     }
 
 
     @Override
+    @Transactional
     public int insertSelective(T entity) {
         return queryJdbcOperation.get().insertSelective(entity, entityClass);
     }
 
     @Override
+    @Transactional
     public long insertList(Iterable<T> entities) {
         return queryJdbcOperation.get().insertList(entities, entityClass);
     }
 
     @Override
+    @Transactional
     public long updateByIdSelective(T entity) {
         return queryJdbcOperation.get().updateByIdSelective(entity, entityClass);
     }
 
     @Override
+    @Transactional
     public long updateSelective(T updater, Example<T> query) {
         return queryJdbcOperation.get().updateSelective(updater, toQuery(query), query.getProbeType());
     }
 
     @Override
+    @Transactional
     public long deleteAll(Example<T> query) {
         return queryJdbcOperation.get().deleteAll(toQuery(query), query.getProbeType());
     }
@@ -72,11 +78,13 @@ public class DefaultRepository<T, ID> extends SimpleJdbcRepository<T, ID> implem
     }
 
     @Override
+    @Transactional
     public long updateSelective(T updater, Weekend<T> query) {
         return queryJdbcOperation.get().updateSelective(updater, toQuery(query), query.getEntityClass());
     }
 
     @Override
+    @Transactional
     public long deleteAll(Weekend<T> query) {
         return queryJdbcOperation.get().deleteAll(toQuery(query), query.getEntityClass());
     }

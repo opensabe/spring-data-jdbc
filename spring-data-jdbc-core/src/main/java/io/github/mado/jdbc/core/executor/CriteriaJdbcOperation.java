@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * @author heng.ma
  */
-public interface QueryJdbcOperation {
+public interface CriteriaJdbcOperation {
 
     <T> int insertSelective (T entity, Class<T> entityClass);
 
