@@ -3,10 +3,8 @@ package io.github.mado.jdbc.core.executor;
 import io.github.mado.jdbc.core.ApplicationContextHolder;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import io.github.mado.jdbc.core.repository.BaseRepository;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentEntity;
@@ -30,17 +28,23 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     private final Class<T> clazz;
 
+    private final boolean unionkey;
+
     public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
         this.operations = entityOperations;
         this.clazz = entity.getType();
         this.exampleMapper = Lazy.of(() -> ApplicationContextHolder.getBean(RelationalExampleMapper.class));
         this.criteriaJdbcOperation = Lazy.of(() -> ApplicationContextHolder.getBean(CustomerJdbcOperation.class));
+        this.unionkey = !entity.hasIdProperty() || entity.getRequiredIdProperty().getType().isAssignableFrom(clazz);
     }
 
 
 
 
     private Query toQuery (Example<T> example) {
+        return exampleMapper.get().getMappedExample(example);
+    }
+    private Query toObjectQuery (Example<?> example) {
         return exampleMapper.get().getMappedExample(example);
     }
 
@@ -157,6 +161,19 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public int updateByIdSelective(T entity) {
+        if (unionkey) {
+            Class<?> superclass = entity.getClass().getSuperclass();
+            if (!Object.class.equals(superclass)) {
+                try {
+                    Object id = superclass.getConstructor().newInstance();
+                    BeanUtils.copyProperties(entity, id);
+                    var example = Example.of(id, ExampleMatcher.matching().withIgnoreNullValues());
+                    return Long.valueOf(criteriaJdbcOperation.get().updateSelective(entity, toObjectQuery(example), clazz)).intValue();
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
         return criteriaJdbcOperation.get().updateByIdSelective(entity, clazz);
     }
 
@@ -184,11 +201,19 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public Optional<T> findById(ID id) {
+        if (unionkey) {
+            var example = Example.of(id, ExampleMatcher.matching().withIgnoreNullValues());
+            return criteriaJdbcOperation.get().findOne(toObjectQuery(example), clazz);
+        }
         return Optional.ofNullable(operations.findById(id, clazz));
     }
 
     @Override
     public boolean existsById(ID id) {
+        if (unionkey) {
+            var example = Example.of(id, ExampleMatcher.matching().withIgnoreNullValues());
+            return criteriaJdbcOperation.get().exists(toObjectQuery(example), clazz);
+        }
         return operations.existsById(id, clazz);
     }
 
@@ -209,6 +234,9 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public List<T> findAllById(Iterable<ID> ids) {
+        if (unionkey) {
+            throw new UnsupportedOperationException("find by ids not supported for union key");
+        }
         return toList(operations.findAllById(ids, clazz));
     }
 
@@ -219,17 +247,33 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public int deleteById(ID id) {
+        if (unionkey) {
+            try {
+                T instance = clazz.getConstructor().newInstance();
+                BeanUtils.copyProperties(instance, id);
+                var example = Example.of(instance, ExampleMatcher.matching().withIgnoreNullValues());
+                return Long.valueOf(deleteAll(example)).intValue();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
         return criteriaJdbcOperation.get().deleteById(id, clazz);
     }
 
 
     @Override
     public int deleteAllById(Iterable<ID> ids) {
+        if (unionkey) {
+            throw new UnsupportedOperationException("delete by ids not supported for union key");
+        }
         return criteriaJdbcOperation.get().deleteAllById(ids, clazz);
     }
 
     @Override
     public int deleteAllById(ID... ids) {
+        if (unionkey) {
+            throw new UnsupportedOperationException("delete by ids not supported for union key");
+        }
         return criteriaJdbcOperation.get().deleteAllById(ids, clazz);
     }
 

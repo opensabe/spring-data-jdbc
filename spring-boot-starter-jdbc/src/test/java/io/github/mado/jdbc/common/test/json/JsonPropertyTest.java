@@ -3,13 +3,11 @@ package io.github.mado.jdbc.common.test.json;
 import io.github.mado.jdbc.common.test.MySQLContainer;
 import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
 import io.github.mado.jdbc.common.test.vo.Activity;
-import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
@@ -35,7 +33,7 @@ import java.util.Optional;
                 "spring.datasource.password=123456",
                 "spring.datasource.url=jdbc:mysql://localhost:3306/sys",
         },
-        classes = JsonPropertyTest.App.class)
+        classes = App.class)
 public class JsonPropertyTest {
 
     @Container
@@ -43,11 +41,6 @@ public class JsonPropertyTest {
             .withFixedExposedPort(3306, 3306);
 
 
-    @EnableJdbcRepositories
-    @SpringBootApplication(scanBasePackages = "io.github.mado.jdbc.autoconfigure")
-    public static class App {
-
-    }
 
     @Autowired
     private ActivityRepository repository;

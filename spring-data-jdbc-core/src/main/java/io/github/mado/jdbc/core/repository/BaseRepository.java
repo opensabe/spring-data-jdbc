@@ -1,6 +1,7 @@
 package io.github.mado.jdbc.core.repository;
 
 import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.data.repository.Repository;
 
 /**
  * @author heng.ma
@@ -16,6 +17,7 @@ public interface BaseRepository<T, ID> extends
         PageAndSortingExecutor<T>,
         ListPageAndSortingExecutor<T>,
         ListQueryExecutor<T, ID>,
-        ExistsExecutor<T, ID>
+        ExistsExecutor<T, ID>,
+        Repository<T, ID>
 {
 }

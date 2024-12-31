@@ -1,12 +1,5 @@
 package io.github.mado.jdbc.autoconfigure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.mado.jdbc.converter.SpecifyConvertingPropertyAccessor;
-import io.github.mado.jdbc.converter.SpecifyPropertyConverterFactory;
-import io.github.mado.jdbc.converter.extension.BigIntToIntegerConverter;
-import io.github.mado.jdbc.converter.extension.BigIntToLongConverter;
-import io.github.mado.jdbc.converter.extension.IntegerToBooleanConverter;
-import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;
 import io.github.mado.jdbc.core.ApplicationContextHolder;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperationImpl;
@@ -17,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -43,7 +35,7 @@ import java.util.function.Consumer;
  * @author heng.ma
  */
 @Configuration(proxyBeanMethods = false)
-public class ExtensionsConfiguration {
+public class GenerateConfiguration {
 
     @Bean
     public ApplicationContextHolder applicationHolder (ApplicationContext applicationContext) {
@@ -75,15 +67,6 @@ public class ExtensionsConfiguration {
     }
 
     @Bean
-    public Consumer<GenericConversionService> innerConverterConsumer () {
-        return conversionService -> {
-          conversionService.addConverter(new BigIntToIntegerConverter());
-          conversionService.addConverter(new BigIntToLongConverter());
-          conversionService.addConverter(new IntegerToBooleanConverter());
-        };
-    }
-
-    @Bean
     public Consumer<GenericConversionService> extensionsConverterConsumer (ObjectProvider<Converter<?,?>> converters) {
         return conversionService -> converters.forEach(conversionService::addConverter);
     }
@@ -98,30 +81,13 @@ public class ExtensionsConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public JsonPropertyValueConverter jsonPropertyValueConverter (ObjectMapper objectMapper) {
-        return new JsonPropertyValueConverter(objectMapper);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public PropertyValueConverterFactory propertyValueConverterFactory (ApplicationContext applicationContext) {
-        return new SpecifyPropertyConverterFactory(applicationContext);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public PropertyValueConversions propertyValueConversions (PropertyValueConverterFactory propertyValueConverterFactory, Optional<List<Consumer<PropertyValueConverterRegistrar>>> config) {
+    public PropertyValueConversions propertyValueConversions (Optional<PropertyValueConverterFactory> propertyValueConverterFactory, Optional<List<Consumer<PropertyValueConverterRegistrar>>> config) {
         SimplePropertyValueConversions conversions = new SimplePropertyValueConversions();
         PropertyValueConverterRegistrar registrar = new PropertyValueConverterRegistrar();
         config.stream().flatMap(List::stream).reduce(Consumer::andThen).ifPresent(c -> c.accept(registrar));
-        conversions.setConverterFactory(propertyValueConverterFactory);
+        conversions.setConverterFactory(propertyValueConverterFactory.orElseGet(PropertyValueConverterFactory::simple));
         conversions.setValueConverterRegistry(registrar.buildRegistry());
         return conversions;
     }
 
-    @Bean
-    @Order
-    public PropertyAccessorCustomizer propertyAccessorCustomizer (ConversionService conversionService, ApplicationContext applicationContext) {
-        return accessor -> new SpecifyConvertingPropertyAccessor<>(accessor, conversionService, applicationContext);
-    }
 }
