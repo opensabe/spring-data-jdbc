@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.converter.extension;
+package io.github.mado.jdbc.core.converter;
 
 import org.springframework.core.convert.converter.Converter;
 
@@ -7,7 +7,7 @@ import java.math.BigInteger;
 /**
  * @author heng.ma
  */
-public class BigIntToLongConverter implements Converter<BigInteger, Long> {
+public class BigIntegerToLongConverter implements Converter<BigInteger, Long> {
 
     @Override
     public Long convert(BigInteger source) {

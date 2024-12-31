@@ -57,11 +57,11 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
             if (idGeneration.driverRequiresKeyColumnNames()) {
                  keyNames = new String[]{id.getColumnName().getReference(identifierProcessing)};
             }
-            i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyHolder, keyNames));
+            i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyNames), keyHolder);
             try {
-                key  = keyHolder.getKeyAs(id.getType());
+                key  = keyHolder.getKey();
             }catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
-                key = Optional.ofNullable(keyHolder.getKeys()).map(m -> m.get(id.getColumnName().toSql(identifierProcessing)));
+                key = Optional.ofNullable(keyHolder.getKeys()).map(m -> m.get(id.getColumnName().toSql(identifierProcessing))).orElseThrow();
             }
             triple.third().setProperty(id, key);
 
@@ -90,9 +90,9 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
             String reference = id.getColumnName().getReference(identifierProcessing);
             Map<T, PersistentPropertyAccessor<T>> accessors = triple.third();
             if (idGeneration.driverRequiresKeyColumnNames()) {
-                i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyHolder, new String[]{reference}));
+                i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), new String[]{reference}), keyHolder);
             }else {
-                i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyHolder));
+                i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), null), keyHolder);
             }
             List<Map<String, Object>> keys = keyHolder.getKeyList();
             int l = 0;

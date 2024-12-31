@@ -1,6 +1,7 @@
 package io.github.mado.jdbc.autoconfigure.config;
 
 import io.github.mado.jdbc.core.ApplicationContextHolder;
+import io.github.mado.jdbc.core.converter.IntegerToBooleanConverter;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperationImpl;
 import io.github.mado.jdbc.core.executor.ExtendSQLGeneratorSource;
@@ -10,17 +11,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.convert.PropertyValueConversions;
-import org.springframework.data.convert.PropertyValueConverterFactory;
-import org.springframework.data.convert.PropertyValueConverterRegistrar;
-import org.springframework.data.convert.SimplePropertyValueConversions;
+import org.springframework.data.convert.*;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
@@ -36,6 +39,13 @@ import java.util.function.Consumer;
  */
 @Configuration(proxyBeanMethods = false)
 public class GenerateConfiguration {
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public PropertyAccessorCustomizer convertingPropertyAccessorCustomizer (ConversionService conversionService) {
+        return accessor -> new ConvertingPropertyAccessor<>(accessor, conversionService);
+    }
+
 
     @Bean
     public ApplicationContextHolder applicationHolder (ApplicationContext applicationContext) {
@@ -67,6 +77,11 @@ public class GenerateConfiguration {
     }
 
     @Bean
+    public IntegerToBooleanConverter integerToBooleanConverter () {
+        return new IntegerToBooleanConverter();
+    }
+
+    @Bean
     public Consumer<GenericConversionService> extensionsConverterConsumer (ObjectProvider<Converter<?,?>> converters) {
         return conversionService -> converters.forEach(conversionService::addConverter);
     }
@@ -89,5 +104,13 @@ public class GenerateConfiguration {
         conversions.setValueConverterRegistry(registrar.buildRegistry());
         return conversions;
     }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PropertyValueConversionService propertyValueConversionService(@Lazy JdbcCustomConversions conversions) {
+        return new PropertyValueConversionService(conversions);
+    }
+
+
 
 }

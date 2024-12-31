@@ -142,7 +142,7 @@ public class ExtendSQLGeneratorSource {
 
         public String deleteByIds (int count) {
             StringBuilder sql = new StringBuilder("delete from ")
-                    .append(table.getReferenceName())
+                    .append(table.getReferenceName().toSql(identifierProcessing))
                     .append(" where ")
                     .append(id.getColumnName().toSql(identifierProcessing))
                     .append(" in (");
@@ -256,7 +256,7 @@ public class ExtendSQLGeneratorSource {
         private String getDeleteById () {
             Delete delete = Delete.builder()
                     .from(table)
-                    .where(table.column(id.getColumnName().getReference(identifierProcessing)).isEqualTo(SQL.bindMarker("?id")))
+                    .where(table.column(id.getColumnName()).isEqualTo(Expressions.just("?")))
                     .build();
             return sqlRenderer.render(delete);
         }

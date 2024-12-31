@@ -1,18 +1,16 @@
 package io.github.mado.jdbc.common.test.json;
 
-import io.github.mado.jdbc.common.test.MySQLContainer;
+import io.github.mado.jdbc.common.test.BaseTest;
 import io.github.mado.jdbc.common.test.json.po.Activity;
 import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
+import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,19 +20,9 @@ import java.util.Optional;
 /**
  * @author heng.ma
  */
-@Testcontainers
-@SpringBootTest(
-        properties = {
-                "spring.datasource.username=root",
-                "spring.datasource.password=123456",
-                "spring.datasource.url=jdbc:mysql://localhost:3306/sys",
-        },
-        classes = App.class)
-public class JsonPropertyTest {
 
-    @Container
-    final static MySQLContainer mysql = new MySQLContainer()
-            .withFixedExposedPort(3306, 3306);
+@EnableJdbcRepositories(basePackageClasses = ActivityRepository.class)
+public class JsonPropertyTest extends BaseTest {
 
 
 

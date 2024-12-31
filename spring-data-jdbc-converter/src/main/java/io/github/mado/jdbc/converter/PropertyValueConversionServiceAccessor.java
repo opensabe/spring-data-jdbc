@@ -1,14 +1,10 @@
 package io.github.mado.jdbc.converter;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.util.Lazy;
 
 import java.sql.ResultSet;
 
@@ -18,13 +14,14 @@ import java.sql.ResultSet;
  * @param <T>
  * @author heng.ma
  */
-public class SpecifyConvertingPropertyAccessor<T> extends ConvertingPropertyAccessor<T> {
+public class PropertyValueConversionServiceAccessor<T> implements PersistentPropertyAccessor<T> {
 
-    private final Lazy<PropertyValueConversionService> propertyValueConversionService;
+    private final PersistentPropertyAccessor<T> delegate;
+    private final PropertyValueConversionService propertyValueConversionService;
 
-    public SpecifyConvertingPropertyAccessor(PersistentPropertyAccessor<T> accessor, ConversionService conversionService, ApplicationContext applicationContext) {
-        super(accessor, conversionService);
-        this.propertyValueConversionService = Lazy.of(() -> applicationContext.getBean(PropertyValueConversionService.class));
+    public PropertyValueConversionServiceAccessor(PersistentPropertyAccessor<T> delegate, PropertyValueConversionService propertyValueConversionService) {
+        this.delegate = delegate;
+        this.propertyValueConversionService = propertyValueConversionService;
     }
 
     /**
@@ -34,11 +31,11 @@ public class SpecifyConvertingPropertyAccessor<T> extends ConvertingPropertyAcce
      */
     @Override
     public void setProperty(PersistentProperty<?> property, Object value) {
-        PropertyValueConversionService service = propertyValueConversionService.get();
+        PropertyValueConversionService service = propertyValueConversionService;
         if (service.hasConverter(property)) {
             value = service.read(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
         }
-        super.setProperty(property, value);
+        delegate.setProperty(property, value);
     }
 
 
@@ -49,8 +46,8 @@ public class SpecifyConvertingPropertyAccessor<T> extends ConvertingPropertyAcce
      */
     @Override
     public Object getProperty(PersistentProperty<?> property) {
-        Object value = super.getProperty(property);
-        PropertyValueConversionService service = propertyValueConversionService.get();
+        Object value = delegate.getProperty(property);
+        PropertyValueConversionService service = propertyValueConversionService;
         if (service.hasConverter(property)) {
             value = service.write(value, (PersistentProperty) property, new DefaultValueConversionContext(property));
         }
@@ -60,5 +57,10 @@ public class SpecifyConvertingPropertyAccessor<T> extends ConvertingPropertyAcce
     @Override
     public Object getProperty(PersistentPropertyPath<? extends PersistentProperty<?>> path) {
         return this.getProperty(path.getRequiredLeafProperty());
+    }
+
+    @Override
+    public T getBean() {
+        return delegate.getBean();
     }
 }

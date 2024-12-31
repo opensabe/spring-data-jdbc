@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.core.executor;
+package io.github.mado.jdbc.datasource;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.*;

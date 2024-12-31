@@ -17,11 +17,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.mado</groupId>
-            <artifactId>spring-data-jdbc-core</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-jdbc</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>

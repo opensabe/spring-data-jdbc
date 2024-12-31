@@ -1,7 +1,7 @@
 package io.github.mado.jdbc.common.test.autoincr.repository;
 
 
-import io.github.mado.jdbc.common.test.vo.LongRole;
+import io.github.mado.jdbc.common.test.autoincr.po.LongRole;
 import io.github.mado.jdbc.core.repository.BaseRepository;
 
 /**

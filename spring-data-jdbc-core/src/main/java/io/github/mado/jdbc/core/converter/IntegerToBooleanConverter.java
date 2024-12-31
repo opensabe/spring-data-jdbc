@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.converter.extension;
+package io.github.mado.jdbc.core.converter;
 
 import org.springframework.core.convert.converter.Converter;
 

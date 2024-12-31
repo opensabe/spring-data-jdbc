@@ -4,33 +4,28 @@ import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.ParameterDisposer;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.*;
 
 public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementSetter implements PreparedStatementCreator, ParameterDisposer, SqlProvider {
 
     private final String sql;
-    private final KeyHolder keyHolder;
-    private final String[] keyColumnNames;
-
+    private String[] keyColumnNames;
+    private boolean autoincr = false;
     private int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
 
     private boolean updatableResults = false;
 
-    public ArgumentPreparedStatementCreator(String sql, Object[] args, KeyHolder keyHolder, String[] keyColumnNames) {
+    public ArgumentPreparedStatementCreator(String sql, Object[] args, String[] keyColumnNames) {
         super(args);
         this.sql = sql;
-        this.keyHolder = keyHolder;
         this.keyColumnNames = keyColumnNames;
-    }
-
-    public ArgumentPreparedStatementCreator(String sql, Object[] args, KeyHolder keyHolder) {
-        this(sql, args, keyHolder, null);
+        this.autoincr = true;
     }
 
     public ArgumentPreparedStatementCreator(String sql, Object[] args) {
-        this (sql, args, null);
+        super(args);
+        this.sql = sql;
     }
 
     public void setResultSetType(int resultSetType) {
@@ -44,11 +39,10 @@ public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementS
     @Override
     public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
         PreparedStatement ps;
-        if (keyColumnNames != null || keyHolder != null) {
-            if (keyColumnNames != null) {
+        if (keyColumnNames != null || autoincr) {
+            if (keyColumnNames !=null && keyColumnNames.length > 1) {
                 ps = con.prepareStatement(this.sql, keyColumnNames);
-            }
-            else {
+            } else {
                 ps = con.prepareStatement(this.sql, Statement.RETURN_GENERATED_KEYS);
             }
         }else if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && !updatableResults) {

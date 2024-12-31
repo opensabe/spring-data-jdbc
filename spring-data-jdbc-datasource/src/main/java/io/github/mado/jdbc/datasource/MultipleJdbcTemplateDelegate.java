@@ -1,6 +1,5 @@
 package io.github.mado.jdbc.datasource;
 
-import io.github.mado.jdbc.core.executor.JdbcTemplateDelegate;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.*;
