@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.common.test.vo;
+package io.github.mado.jdbc.common.test.json.po;
 
 import io.github.mado.jdbc.converter.Converter;
 import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;

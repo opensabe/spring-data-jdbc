@@ -1,20 +1,16 @@
 package io.github.mado.jdbc.common.test.json;
 
 import io.github.mado.jdbc.common.test.MySQLContainer;
+import io.github.mado.jdbc.common.test.json.po.Activity;
 import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
-import io.github.mado.jdbc.common.test.vo.Activity;
-import io.github.mado.jdbc.core.lambda.Weekend;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.QueryMapper;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -151,15 +147,26 @@ public class JsonPropertyTest {
     }
 
     @Test
-    void testQueryMapper () {
-        QueryMapper queryMapper = new QueryMapper(dialect, jdbcConverter);
-        Weekend<Activity> weekend = Weekend.of(Activity.class);
-        weekend.weekendCriteria()
-                .andEqualTo(Activity::getId, "1")
-                .andIn(Activity::getOnline, false, true);
-        MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        RelationalPersistentEntity entity = (RelationalPersistentEntity) mappingContext.getRequiredPersistentEntity(Activity.class);
-        System.out.println(weekend.toQuery().getCriteria().get());
-        System.out.println(parameterSource.getValues());
+    void testCustomerSQL () {
+        Activity activity = new Activity();
+        activity.setId("1");
+        activity.setOnline(true);
+        activity.setConfig(new Activity.Config("k1", "v1"));
+        activity.setPlatforms(List.of("p1", "p2"));
+        activity.setTimes(Map.of("m1", true, "m2", false));
+
+
+        repository.insertSelective(activity);
+        List<ActivityRepository.ActivityRecord> activityRecords = repository.selectActivities();
+
+        Assertions.assertThat(activityRecords)
+                .hasSize(1)
+                .first()
+                .extracting(ActivityRepository.ActivityRecord::getPlatforms,
+                        a -> a.getConfig().getKey(),
+                        a -> a.getConfig().getValue(),
+                        a -> a.getTimes().get("m1"),
+                        a -> a.getTimes().get("m2")
+                ).contains(List.of("p1", "p2"), "k1", "v1", true, false);
     }
 }
