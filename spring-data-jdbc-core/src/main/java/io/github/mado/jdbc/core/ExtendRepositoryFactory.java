@@ -4,7 +4,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.config.RepositoryConfiguration;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 
 import java.io.Serializable;
@@ -19,8 +19,18 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
 
     private List<BeanFactoryCustomizers> beanFactoryCustomizers;
 
+    private RepositoryConfigurationSource configSource;
+
     public ExtendRepositoryFactory(Class<? extends T> repositoryInterface) {
         super(repositoryInterface);
+    }
+
+    public RepositoryConfigurationSource getConfigSource() {
+        return configSource;
+    }
+
+    public void setConfigSource(RepositoryConfigurationSource configSource) {
+        this.configSource = configSource;
     }
 
     @Autowired(required = false)
@@ -51,6 +61,7 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
 
     @Override
     public void afterPropertiesSet() {
+        addRepositoryFactoryCustomizer(new RepositoryFactoryCategoryCustomizer(getConfigSource()));
         if (repositoryFactoryCustomizers != null) {
             repositoryFactoryCustomizers.forEach(this::addRepositoryFactoryCustomizer);
         }
