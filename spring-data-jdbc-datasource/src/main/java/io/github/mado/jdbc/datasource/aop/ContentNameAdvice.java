@@ -13,19 +13,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * 这里用简单的ThreadLocal,如果service中用了多线程，那么新开启的线程重新计算自己的name
  * @author heng.ma
  */
-public class DataSourceNameAdvice implements MethodInterceptor {
+public class ContentNameAdvice implements MethodInterceptor {
 
-    private static final ThreadLocal<String> DATA_SOURCE_PLACE_HOLDER = new ThreadLocal<>();
+    private static final ThreadLocal<String> CONTENT_NAME_HOLDER = new ThreadLocal<>();
 
     public static String getRepositoryName () {
-        return DATA_SOURCE_PLACE_HOLDER.get();
+        return CONTENT_NAME_HOLDER.get();
     }
 
     private Map<MethodInvocation, String> cache = new ConcurrentHashMap<>();
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        if (StringUtils.hasText(DATA_SOURCE_PLACE_HOLDER.get())) {
+        if (StringUtils.hasText(CONTENT_NAME_HOLDER.get())) {
             return invocation.proceed();
         }
         String name = cache.computeIfAbsent(invocation, k -> {
@@ -35,10 +35,10 @@ public class DataSourceNameAdvice implements MethodInterceptor {
             return "default";
         });
         try {
-            DATA_SOURCE_PLACE_HOLDER.set(name);
+            CONTENT_NAME_HOLDER.set(name);
             return invocation.proceed();
         }finally {
-            DATA_SOURCE_PLACE_HOLDER.remove();
+            CONTENT_NAME_HOLDER.remove();
         }
     }
 }

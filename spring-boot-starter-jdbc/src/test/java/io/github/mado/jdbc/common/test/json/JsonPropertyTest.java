@@ -3,14 +3,13 @@ package io.github.mado.jdbc.common.test.json;
 import io.github.mado.jdbc.common.test.BaseTest;
 import io.github.mado.jdbc.common.test.json.po.Activity;
 import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
+import io.github.mado.jdbc.common.test.json.service.ActivityService;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.context.annotation.Import;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +20,7 @@ import java.util.Optional;
  * @author heng.ma
  */
 
+@Import(ActivityService.class)
 @EnableJdbcRepositories(basePackageClasses = ActivityRepository.class)
 public class JsonPropertyTest extends BaseTest {
 
@@ -30,17 +30,13 @@ public class JsonPropertyTest extends BaseTest {
     private ActivityRepository repository;
 
     @Autowired
-    private Dialect dialect;
-    @Autowired
-    private JdbcConverter jdbcConverter;
-
-    @Autowired
-    private MappingContext mappingContext;
+    private ActivityService service;
 
     @BeforeEach
     void clear () {
         repository.deleteAll();
     }
+
 
     @Test
     void testSelect () {

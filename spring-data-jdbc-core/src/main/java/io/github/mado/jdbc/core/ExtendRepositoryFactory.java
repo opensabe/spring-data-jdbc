@@ -11,13 +11,14 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
+ * operations, dataAccessStrategy
  * @author heng.ma
  */
 public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends Serializable> extends JdbcRepositoryFactoryBean<T, S, ID> {
 
     private List<RepositoryFactoryCustomizer> repositoryFactoryCustomizers;
 
-    private List<BeanFactoryCustomizers> beanFactoryCustomizers;
+    private List<BeanFactoryCustomizer> beanFactoryCustomizers;
 
     private RepositoryConfigurationSource configSource;
 
@@ -39,10 +40,9 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
     }
 
     @Autowired(required = false)
-    public void setBeanFactoryCustomizers(List<BeanFactoryCustomizers> beanFactoryCustomizers) {
+    public void setBeanFactoryCustomizers(List<BeanFactoryCustomizer> beanFactoryCustomizers) {
         this.beanFactoryCustomizers = beanFactoryCustomizers;
     }
-
 
     /**
      * 自定义BeanFactory,在获取transaction时使用动态数据源
@@ -52,7 +52,7 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) {
         if (beanFactoryCustomizers != null) {
-            for (BeanFactoryCustomizers customizer : beanFactoryCustomizers) {
+            for (BeanFactoryCustomizer customizer : beanFactoryCustomizers) {
                 beanFactory = customizer.transform(beanFactory);
             }
         }
