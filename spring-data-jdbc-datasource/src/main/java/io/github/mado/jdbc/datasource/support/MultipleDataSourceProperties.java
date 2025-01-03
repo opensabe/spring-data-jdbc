@@ -16,6 +16,35 @@ public class MultipleDataSourceProperties {
     private Map<String, List<Properties>> datasource;
 
 
+    public Properties defaultProperties (String name) {
+        List<Properties> properties = datasource.get(name);
+        if (properties == null || properties.isEmpty()) {
+            properties = datasource.get("default");
+        }
+        if (properties != null) {
+            for (Properties property : properties) {
+                if (property.getHikari() == null || (!property.getHikari().isReadOnly())) {
+                    return property;
+                }
+            }
+        }
+        return null;
+    }
+    public Properties readOnlyProperties (String name) {
+        List<Properties> properties = datasource.get(name);
+        if (properties == null || properties.isEmpty()) {
+            properties = datasource.get("default");
+        }
+        if (properties != null) {
+            for (Properties property : properties) {
+                if (property.getHikari() != null && property.getHikari().isReadOnly()) {
+                    return property;
+                }
+            }
+        }
+        return null;
+    }
+
     public Map<String, List<Properties>> getDatasource() {
         return datasource;
     }

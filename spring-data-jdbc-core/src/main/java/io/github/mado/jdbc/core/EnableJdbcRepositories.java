@@ -77,7 +77,7 @@ public @interface EnableJdbcRepositories {
      * {@link JdbcRepositoryFactoryBean}.
      */
 //    @AliasFor(annotation = org.springframework.data.jdbc.repository.config.EnableJdbcRepositories.class)
-    Class<?> repositoryFactoryBeanClass() default ExtendRepositoryFactory.class;
+    Class<?> repositoryFactoryBeanClass() default ExtendRepositoryFactoryBean.class;
 
 
     /**

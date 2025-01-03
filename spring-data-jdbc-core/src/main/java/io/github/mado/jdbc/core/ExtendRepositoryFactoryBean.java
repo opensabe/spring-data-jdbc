@@ -6,6 +6,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
+import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
 import java.io.Serializable;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  * operations, dataAccessStrategy
  * @author heng.ma
  */
-public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends Serializable> extends JdbcRepositoryFactoryBean<T, S, ID> {
+public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> extends JdbcRepositoryFactoryBean<T, S, ID> {
 
     private List<RepositoryFactoryCustomizer> repositoryFactoryCustomizers;
 
@@ -22,7 +23,9 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
 
     private RepositoryConfigurationSource configSource;
 
-    public ExtendRepositoryFactory(Class<? extends T> repositoryInterface) {
+    private RepositoryFactorySupportSupplier repositoryFactorySupportSupplier;
+
+    public ExtendRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
         super(repositoryInterface);
     }
 
@@ -44,6 +47,11 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
         this.beanFactoryCustomizers = beanFactoryCustomizers;
     }
 
+    @Autowired(required = false)
+    public void setRepositoryFactorySupportSupplier(RepositoryFactorySupportSupplier repositoryFactorySupportSupplier) {
+        this.repositoryFactorySupportSupplier = repositoryFactorySupportSupplier;
+    }
+
     /**
      * 自定义BeanFactory,在获取transaction时使用动态数据源
      * @param beanFactory owning BeanFactory (never {@code null}).
@@ -57,6 +65,14 @@ public class ExtendRepositoryFactory<T extends Repository<S, ID>, S, ID extends 
             }
         }
         super.setBeanFactory(beanFactory);
+    }
+
+    @Override
+    protected RepositoryFactorySupport doCreateRepositoryFactory() {
+        if (repositoryFactorySupportSupplier != null) {
+            return repositoryFactorySupportSupplier.get(this);
+        }
+        return super.doCreateRepositoryFactory();
     }
 
     @Override
