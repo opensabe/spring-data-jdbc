@@ -1,6 +1,6 @@
 package io.github.mado.jdbc.common.test.json.service;
 
-import io.github.mado.jdbc.common.test.json.po.Activity;
+import io.github.mado.jdbc.common.test.vo.Activity;
 import io.github.mado.jdbc.core.BaseService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

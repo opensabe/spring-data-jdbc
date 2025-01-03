@@ -1,4 +1,4 @@
-package io.github.mado.jdbc.common.test.json.po;
+package io.github.mado.jdbc.common.test.vo;
 
 import io.github.mado.jdbc.converter.Converter;
 import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;
@@ -73,6 +73,14 @@ public class Activity {
         private String key;
         private String value;
 
+        public Config() {
+        }
+
+        public Config(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
         public String getKey() {
             return key;
         }
@@ -81,20 +89,12 @@ public class Activity {
             this.key = key;
         }
 
-        public Config(String key, String value) {
-            this.key = key;
-            this.value = value;
-        }
-
         public String getValue() {
             return value;
         }
 
         public void setValue(String value) {
             this.value = value;
-        }
-
-        public Config() {
         }
     }
 }

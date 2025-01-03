@@ -1,7 +1,7 @@
 package io.github.mado.jdbc.common.test.json.repository;
 
 
-import io.github.mado.jdbc.common.test.json.po.Activity;
+import io.github.mado.jdbc.common.test.vo.Activity;
 import io.github.mado.jdbc.converter.Converter;
 import io.github.mado.jdbc.converter.extension.JsonPropertyValueConverter;
 import io.github.mado.jdbc.core.repository.BaseRepository;

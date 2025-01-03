@@ -1,6 +1,6 @@
 package io.github.mado.jdbc.autoconfigure.config;
 
-import io.github.mado.jdbc.core.RepositoryFactorySupportSupplier;
+import io.github.mado.jdbc.core.RepositoryFactoryBeanCustomizer;
 import io.github.mado.jdbc.datasource.aop.ContentNameAdvice;
 import io.github.mado.jdbc.datasource.aop.ContentNameAdvisor;
 import io.github.mado.jdbc.datasource.aop.ReadOnlyRepositoryFactoryCustomizer;
@@ -9,12 +9,16 @@ import io.github.mado.jdbc.datasource.support.MultipleDataSourceProperties;
 import io.github.mado.jdbc.datasource.support.TransactionManagerBeanFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.annotation.*;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.transaction.interceptor.BeanFactoryTransactionAttributeSourceAdvisor;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
@@ -24,8 +28,9 @@ import java.util.Optional;
 /**
  * @author heng.ma
  */
+@ConditionalOnClass(MultipleDataSourceProperties.class)
+@Conditional(DynamicDataSourceConfiguration.PropertyCondition.class)
 @EnableConfigurationProperties(MultipleDataSourceProperties.class)
-@ConditionalOnBean(MultipleDataSourceProperties.class)
 @Configuration(proxyBeanMethods = false)
 public class DynamicDataSourceConfiguration {
 
@@ -34,6 +39,7 @@ public class DynamicDataSourceConfiguration {
     public DynamicDataSourceConfiguration(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
+
 
     @Bean
     public BeanPostProcessor transactionBeanFactoryBeanPostProcessor () {
@@ -50,16 +56,25 @@ public class DynamicDataSourceConfiguration {
     }
 
 
+    @Bean
+    @ConditionalOnClass(JdbcNamedContextFactory.class)
+    public JdbcNamedContextFactory.Specification dataSourceSpecification () {
+        return new JdbcNamedContextFactory.Specification("default",
+                ConverterConfiguration.SmartJdbcConfiguration.class,
+                GenerateConfiguration.class);
+    }
+
 
     @Bean
     @ConditionalOnMissingBean
-    public JdbcNamedContextFactory jdbcNamedContextFactory () {
-        return new JdbcNamedContextFactory();
+    public JdbcNamedContextFactory jdbcNamedContextFactory (ObjectProvider<JdbcNamedContextFactory.Specification> specifications) {
+        return new JdbcNamedContextFactory(specifications.stream().toList());
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public DataSource dataSource (JdbcNamedContextFactory jdbcNamedContextFactory) {
+    public DataSource dataSource (MultipleDataSourceProperties properties, JdbcNamedContextFactory jdbcNamedContextFactory) {
+        properties.getDatasource().keySet().forEach(jdbcNamedContextFactory::getDataSource);
         return jdbcNamedContextFactory.getDataSource("default");
     }
 
@@ -79,7 +94,26 @@ public class DynamicDataSourceConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RepositoryFactorySupportSupplier repositoryFactorySupportSupplier (JdbcNamedContextFactory factory) {
-        return bean -> factory.getRepositoryFactorySupport(bean.getConfigSource().getAttribute("name").orElse("default"));
+    public RepositoryFactoryBeanCustomizer repositoryFactoryBeanCustomizer (JdbcNamedContextFactory factory) {
+        return factoryBean -> {
+            String name = factoryBean.getConfigSource().getAttribute("name").orElse("default");
+            factoryBean.setJdbcOperations(factory.getInstance(name, NamedParameterJdbcOperations.class));
+//            factoryBean.setBeanFactory(factory.getInstance(name, BeanFactory.class));
+            factoryBean.setDataAccessStrategy(factory.getInstance(name, DataAccessStrategy.class));
+//            factoryBean.setTransactionManager(name);
+        };
+    }
+
+    public static class PropertyCondition implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            Binder binder = Binder.get(context.getEnvironment());
+            var p = binder.bind(MultipleDataSourceProperties.PREFIX, MultipleDataSourceProperties.class).isBound();
+            return p;
+        }
     }
 }
+
+
+

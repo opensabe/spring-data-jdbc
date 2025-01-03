@@ -1,10 +1,10 @@
 package io.github.mado.jdbc.common.test.autoincr;
 
 import io.github.mado.jdbc.common.test.BaseTest;
-import io.github.mado.jdbc.common.test.autoincr.po.LongRole;
-import io.github.mado.jdbc.common.test.autoincr.po.Role;
 import io.github.mado.jdbc.common.test.autoincr.repository.LongRoleRepository;
 import io.github.mado.jdbc.common.test.autoincr.repository.RoleRepository;
+import io.github.mado.jdbc.common.test.vo.LongRole;
+import io.github.mado.jdbc.common.test.vo.Role;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import org.junit.jupiter.api.BeforeEach;

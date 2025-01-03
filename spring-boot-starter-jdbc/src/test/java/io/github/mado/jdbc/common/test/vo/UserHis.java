@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
  * @author heng.ma
  */
 
-@Table(name = "t_user")
-public class User {
+@Table(name = "t_user_his")
+public class UserHis {
 
     @Id
     private String id;
@@ -28,14 +28,14 @@ public class User {
     @ReadOnlyProperty
     private LocalDateTime updateTime;
 
-    public User(String id, String name, String email, Integer age) {
+    public UserHis(String id, String name, String email, Integer age) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.age = age;
     }
 
-    public User() {
+    public UserHis() {
     }
 
     public String getId() {

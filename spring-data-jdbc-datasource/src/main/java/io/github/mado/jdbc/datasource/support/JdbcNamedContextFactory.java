@@ -9,6 +9,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.transaction.TransactionManager;
 
 import javax.sql.DataSource;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author heng.ma
@@ -18,8 +20,11 @@ public class JdbcNamedContextFactory extends NamedContextFactory<JdbcNamedContex
     public static final String  propertySourceName = "spring.dynamic.datasource";
     public static final String  propertyName = propertySourceName+".name";
 
-    public JdbcNamedContextFactory(Class<?> ... configuration) {
+    public JdbcNamedContextFactory(List<Specification> specifications) {
         super(DefaultDataSourceConfiguration.class, propertySourceName, propertyName);
+        if (Objects.nonNull(specifications) && !specifications.isEmpty()) {
+            setConfigurations(specifications);
+        }
     }
 
 

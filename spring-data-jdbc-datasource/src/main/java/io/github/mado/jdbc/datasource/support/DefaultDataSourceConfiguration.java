@@ -9,7 +9,11 @@ import org.springframework.boot.autoconfigure.transaction.TransactionManagerCust
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
+import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -60,6 +64,7 @@ public class DefaultDataSourceConfiguration {
         return null;
     }
 
+
     private DataSource createDataSource (MultipleDataSourceProperties.Properties properties) {
         if (!StringUtils.hasText(properties.getName())) {
             properties.setName(name);
@@ -88,24 +93,39 @@ public class DefaultDataSourceConfiguration {
         return dataSource;
     }
 
+
+
     @Bean
-    public JdbcTemplate jdbcTemplate (@Qualifier("defaultDataSource") DataSource dataSource) {
+    public JdbcTemplate namedJdbcTemplate (@Qualifier("defaultDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 
     @Bean
-    public NamedParameterJdbcOperations namedParameterJdbcOperations (JdbcTemplate jdbcTemplate) {
+    public NamedParameterJdbcOperations namedParameterJdbcOperations (@Qualifier("namedJdbcTemplate") JdbcTemplate jdbcTemplate) {
         return new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 
     @Bean
+    @Lazy
+    public DataAccessStrategy dataAccessStrategy (RelationalMappingContext context,
+                                                  JdbcConverter jdbcConverter,
+                                                  @Qualifier("namedParameterJdbcOperations") NamedParameterJdbcOperations operations,
+                                                  Dialect dialect) {
+        return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
+                jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter, dialect),
+                new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect));
+    }
+
+    @Bean
     @ConditionalOnMissingBean(TransactionManager.class)
-    DataSourceTransactionManager transactionManager(Environment environment, @Qualifier("defaultDataSource")DataSource dataSource,
+    public DataSourceTransactionManager transactionManager(Environment environment, @Qualifier("defaultDataSource")DataSource dataSource,
                                                     ObjectProvider<TransactionManagerCustomizers> transactionManagerCustomizers) {
         DataSourceTransactionManager transactionManager = createTransactionManager(environment, dataSource);
         transactionManagerCustomizers.ifAvailable((customizers) -> customizers.customize(transactionManager));
         return transactionManager;
     }
+
+
 
     private DataSourceTransactionManager createTransactionManager(Environment environment, DataSource dataSource) {
         return environment.getProperty("spring.dao.exceptiontranslation.enabled", Boolean.class, Boolean.TRUE)

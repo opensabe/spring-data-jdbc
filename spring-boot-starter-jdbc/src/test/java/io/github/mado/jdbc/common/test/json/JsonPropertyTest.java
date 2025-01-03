@@ -1,9 +1,9 @@
 package io.github.mado.jdbc.common.test.json;
 
 import io.github.mado.jdbc.common.test.BaseTest;
-import io.github.mado.jdbc.common.test.json.po.Activity;
 import io.github.mado.jdbc.common.test.json.repository.ActivityRepository;
 import io.github.mado.jdbc.common.test.json.service.ActivityService;
+import io.github.mado.jdbc.common.test.vo.Activity;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

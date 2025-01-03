@@ -25,6 +25,9 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
 
     private RepositoryFactorySupportSupplier repositoryFactorySupportSupplier;
 
+    private RepositoryFactoryBeanCustomizer factoryBeanCustomizer;
+
+
     public ExtendRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
         super(repositoryInterface);
     }
@@ -50,6 +53,12 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     @Autowired(required = false)
     public void setRepositoryFactorySupportSupplier(RepositoryFactorySupportSupplier repositoryFactorySupportSupplier) {
         this.repositoryFactorySupportSupplier = repositoryFactorySupportSupplier;
+    }
+
+
+    @Autowired(required = false)
+    public void setFactoryBeanCustomizer(RepositoryFactoryBeanCustomizer factoryBeanCustomizer) {
+        this.factoryBeanCustomizer = factoryBeanCustomizer;
     }
 
     /**
@@ -78,6 +87,9 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     @Override
     public void afterPropertiesSet() {
         addRepositoryFactoryCustomizer(new RepositoryFactoryCategoryCustomizer(getConfigSource()));
+        if (factoryBeanCustomizer != null) {
+            factoryBeanCustomizer.customize(this);
+        }
         if (repositoryFactoryCustomizers != null) {
             repositoryFactoryCustomizers.forEach(this::addRepositoryFactoryCustomizer);
         }

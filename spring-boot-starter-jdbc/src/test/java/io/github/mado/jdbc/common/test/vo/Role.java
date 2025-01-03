@@ -1,8 +1,6 @@
-package io.github.mado.jdbc.common.test.autoincr.po;
-
+package io.github.mado.jdbc.common.test.vo;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
@@ -10,23 +8,25 @@ import org.springframework.data.relational.core.mapping.Table;
  */
 
 @Table(name = "t_role")
-public class LongRole {
+public class Role {
 
     @Id
-    @ReadOnlyProperty
-    private Long id;
+    private Integer id;
 
     private String name;
 
-    public LongRole(String name) {
+    public Role(String name) {
         this.name = name;
     }
 
-    public Long getId() {
+    public Role() {
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

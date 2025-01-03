@@ -10,8 +10,10 @@ import java.util.Map;
 /**
  * @author heng.ma
  */
-@ConfigurationProperties(prefix = "spring.dynamic")
+@ConfigurationProperties(prefix = MultipleDataSourceProperties.PREFIX)
 public class MultipleDataSourceProperties {
+
+    public static final String PREFIX = "spring.dynamic";
 
     private Map<String, List<Properties>> datasource;
 
