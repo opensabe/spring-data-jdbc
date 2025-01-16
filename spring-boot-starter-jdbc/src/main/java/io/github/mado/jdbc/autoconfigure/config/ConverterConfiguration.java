@@ -56,7 +56,7 @@ public class ConverterConfiguration {
     }
 
 
-    public class SmartJdbcConfiguration extends AbstractJdbcConfiguration {
+    public static class SmartJdbcConfiguration extends AbstractJdbcConfiguration {
 
         private ApplicationContext applicationContext;
 

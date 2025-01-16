@@ -17,8 +17,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.*;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.transaction.interceptor.BeanFactoryTransactionAttributeSourceAdvisor;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
@@ -97,10 +95,9 @@ public class DynamicDataSourceConfiguration {
     public RepositoryFactoryBeanCustomizer repositoryFactoryBeanCustomizer (JdbcNamedContextFactory factory) {
         return factoryBean -> {
             String name = factoryBean.getConfigSource().getAttribute("name").orElse("default");
-            factoryBean.setJdbcOperations(factory.getInstance(name, NamedParameterJdbcOperations.class));
-//            factoryBean.setBeanFactory(factory.getInstance(name, BeanFactory.class));
-            factoryBean.setDataAccessStrategy(factory.getInstance(name, DataAccessStrategy.class));
-//            factoryBean.setTransactionManager(name);
+            factoryBean.setJdbcOperations(factory.getNamedParameterJdbcOperations(name));
+            factoryBean.setDataAccessStrategy(factory.getDataAccessStrategy(name));
+            factoryBean.setTransactionManager(name);
         };
     }
 
@@ -109,8 +106,7 @@ public class DynamicDataSourceConfiguration {
         @Override
         public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
             Binder binder = Binder.get(context.getEnvironment());
-            var p = binder.bind(MultipleDataSourceProperties.PREFIX, MultipleDataSourceProperties.class).isBound();
-            return p;
+            return binder.bind(MultipleDataSourceProperties.PREFIX, MultipleDataSourceProperties.class).isBound();
         }
     }
 }

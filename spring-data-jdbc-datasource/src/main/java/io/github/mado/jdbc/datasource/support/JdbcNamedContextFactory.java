@@ -2,9 +2,7 @@ package io.github.mado.jdbc.datasource.support;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.context.named.NamedContextFactory;
-import org.springframework.data.repository.core.support.RepositoryFactorySupport;
-import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.transaction.TransactionManager;
 
@@ -32,21 +30,13 @@ public class JdbcNamedContextFactory extends NamedContextFactory<JdbcNamedContex
         return getInstance(name, DataSource.class);
     }
 
-    public JdbcTemplate jdbcTemplate (String name) {
-        return getInstance(name, JdbcTemplate.class);
+
+    public DataAccessStrategy getDataAccessStrategy (String name) {
+        return getInstance(name, DataAccessStrategy.class);
     }
 
-    public JdbcOperations getJdbcOperations (String name) {
-        return getInstance(name, JdbcOperations.class);
-    }
-
-    public NamedParameterJdbcOperations namedParameterJdbcOperations (String name) {
+    public NamedParameterJdbcOperations getNamedParameterJdbcOperations (String name) {
         return getInstance(name, NamedParameterJdbcOperations.class);
-    }
-
-
-    public RepositoryFactorySupport getRepositoryFactorySupport (String name) {
-        return getInstance(name, RepositoryFactorySupport.class);
     }
 
     public TransactionManager getTransactionManager (String name) {
