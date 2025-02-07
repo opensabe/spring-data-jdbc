@@ -2,14 +2,29 @@ package io.github.mado.jdbc.core;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.jdbc.repository.support.PagedJdbcQueryLookupStrategy;
+import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.ReflectionUtils;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * operations, dataAccessStrategy
@@ -81,7 +96,49 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
         if (repositoryFactorySupportSupplier != null) {
             return repositoryFactorySupportSupplier.get(this);
         }
-        return super.doCreateRepositoryFactory();
+        DataAccessStrategy dataAccessStrategy = getFiled(DataAccessStrategy.class, "dataAccessStrategy");
+        RelationalMappingContext mappingContext = getFiled(RelationalMappingContext.class, "mappingContext");
+        JdbcConverter converter = getFiled(JdbcConverter.class, "converter");
+        Dialect dialect = getFiled(Dialect.class, "dialect");
+        ApplicationEventPublisher publisher = getFiled(ApplicationEventPublisher.class, "publisher");
+        NamedParameterJdbcOperations operations = getFiled(NamedParameterJdbcOperations.class, "operations");
+        QueryMappingConfiguration queryMappingConfiguration = getFiled(QueryMappingConfiguration.class, "queryMappingConfiguration");
+        EntityCallbacks entityCallbacks = getFiled(EntityCallbacks.class, "entityCallbacks");
+        BeanFactory beanFactory = getFiled(BeanFactory.class, "beanFactory");
+
+        JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
+                converter, dialect, publisher, operations) {
+            @Override
+            protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key, QueryMethodEvaluationContextProvider evaluationContextProvider) {
+                return super.getQueryLookupStrategy(key, evaluationContextProvider).map(s ->
+                         (method, metadata, factory, namedQueries) -> {
+                            try {
+                                return s.resolveQuery(method, metadata, factory, namedQueries);
+                            }catch (UnsupportedOperationException e) {
+                                 return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, beanFactory,evaluationContextProvider)
+                                         .resolveQuery(method, metadata, factory, namedQueries);
+                            }
+                        }
+                );
+            }
+        };
+        jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
+        jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
+        jdbcRepositoryFactory.setBeanFactory(beanFactory);
+
+        return jdbcRepositoryFactory;
+    }
+
+
+
+    private <E> E getFiled (Class<E> type, String name) {
+        Field field = ReflectionUtils.findField(this.getClass(), name, type);
+        field.setAccessible(true);
+        try {
+            return (E)field.get(this);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
