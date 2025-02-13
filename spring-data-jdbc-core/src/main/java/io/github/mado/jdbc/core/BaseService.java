@@ -1,6 +1,5 @@
 package io.github.mado.jdbc.core;
 
-import io.github.mado.jdbc.core.lambda.Fn;
 import io.github.mado.jdbc.core.lambda.Weekend;
 import io.github.mado.jdbc.core.repository.BaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +7,6 @@ import org.springframework.data.domain.*;
 import org.springframework.data.util.TypeInformation;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -33,6 +31,11 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
         return repository;
     }
 
+    public Example<T> getExample (T entity) {
+        return Example.of(entity, ExampleMatcher.matching().withIgnoreNullValues());
+    }
+
+
     @Override
     public Optional<T> selectById(ID id) {
         return repository.findById(id);
@@ -44,13 +47,8 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Override
-    public T selectInstanceById(ID id) {
-        return selectById(id).orElseThrow(NullPointerException::new);
-    }
-
-    @Override
-    public Optional<T> selectOne(T entity) {
-        return repository.findOne(getExample(entity));
+    public Optional<T> selectOne(Sort sort) {
+        return repository.findOne(sort);
     }
 
     @Override
@@ -59,63 +57,28 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Override
-    public Optional<T> selectOne(T entity, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findOne(getExample(entity), SortUtils.formArray(order, properties));
-    }
-
-    @Override
-    public Optional<T> selectOne(T entity, Map<Fn<T, Object>, Sort.Direction> sort) {
-        return repository.findOne(getExample(entity), SortUtils.formMap(sort));
-    }
-
-    @Override
-    public Optional<T> selectOne(Weekend<T> weekend) {
-        return repository.findOne(weekend);
-    }
-
-    @Override
     public Optional<T> selectOne(Weekend<T> weekend, Sort sort) {
         return repository.findOne(weekend, sort);
     }
 
     @Override
-    public Optional<T> selectOne(Weekend<T> weekend, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findOne(weekend, SortUtils.formArray(order, properties));
+    public List<T> select() {
+        return repository.findAll();
     }
 
     @Override
-    public Optional<T> selectOne(Weekend<T> weekend, Map<Fn<T, Object>, Sort.Direction> sort) {
-        return repository.findOne(weekend, SortUtils.formMap(sort));
+    public List<T> select(Sort sort) {
+        return repository.findAll(sort);
     }
 
     @Override
-    public List<T> select(T entity) {
-        return repository.findAll(getExample(entity));
+    public List<T> select(T entity, Sort sort) {
+        return repository.findAll(getExample(entity), sort);
     }
 
     @Override
-    public List<T> select(T entity, Sort.Direction direction, Fn<T, Object>... order) {
-        return repository.findAll(getExample(entity), SortUtils.formArray(direction, order));
-    }
-
-    @Override
-    public List<T> select(T entity, Map<Fn<T, Object>, Sort.Direction> sort) {
-        return repository.findAll(getExample(entity), SortUtils.formMap(sort));
-    }
-
-    @Override
-    public List<T> select(Weekend<T> weekend) {
-        return repository.findAll(weekend);
-    }
-
-    @Override
-    public List<T> select(Weekend<T> weekend, Sort.Direction direction, Fn<T, Object>... order) {
-        return repository.findAll(weekend, SortUtils.formArray(direction, order));
-    }
-
-    @Override
-    public List<T> select(Weekend<T> weekend, Map<Fn<T, Object>, Sort.Direction> sort) {
-        return repository.findAll(weekend, SortUtils.formMap(sort));
+    public List<T> select(Weekend<T> weekend, Sort sort) {
+        return repository.findAll(weekend, sort);
     }
 
     @Override
@@ -124,58 +87,28 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Override
-    public Page<T> select(T entity, int pageNum, int pageSize) {
-        return repository.findAll(getExample(entity), PageRequest.of(pageNum-1, pageSize));
+    public Page<T> select(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 
     @Override
-    public Page<T> select(T entity, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findAll(getExample(entity), PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formArray(order, properties)));
+    public Page<T> select(Weekend<T> weekend, Pageable pageable) {
+        return repository.findAll(weekend, pageable);
     }
 
     @Override
-    public Page<T> select(T entity, int pageNum, int pageSize, Map<Fn<T, Object>, Sort.Direction> order) {
-        return repository.findAll(getExample(entity), PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formMap(order)));
+    public List<T> selectByLimit(Weekend<T> weekend, int limit, Sort sort) {
+        return repository.findLimit(weekend, limit, sort);
     }
 
     @Override
-    public Page<T> select(Weekend<T> weekend, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findAll(weekend, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formArray(order, properties)));
+    public List<T> selectByLimit(T entity, int limit, Sort sort) {
+        return repository.findLimit(getExample(entity), limit, sort);
     }
 
     @Override
-    public Page<T> select(Weekend<T> weekend, int pageNum, int pageSize, Map<Fn<T, Object>, Sort.Direction> order) {
-        return repository.findAll(weekend, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formMap(order)));
-    }
-
-    @Override
-    public List<T> selectByLimit(Weekend<T> weekend, int limit) {
-        return repository.findLimit(weekend, limit, Sort.unsorted());
-    }
-
-    @Override
-    public List<T> selectByLimit(Weekend<T> weekend, int limit, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findLimit(weekend, limit, SortUtils.formArray(order, properties));
-    }
-
-    @Override
-    public List<T> selectByLimit(Weekend<T> weekend, int limit, Map<Fn<T, Object>, Sort.Direction> order) {
-        return repository.findLimit(weekend, limit, SortUtils.formMap(order));
-    }
-
-    @Override
-    public List<T> selectByLimit(T entity, int limit) {
-        return repository.findLimit(getExample(entity), limit, Sort.unsorted());
-    }
-
-    @Override
-    public List<T> selectByLimit(T entity, int limit, Sort.Direction order, Fn<T, Object>... properties) {
-        return repository.findLimit(getExample(entity), limit, SortUtils.formArray(order, properties));
-    }
-
-    @Override
-    public List<T> selectByLimit(T entity, int limit, Map<Fn<T, Object>, Sort.Direction> order) {
-        return repository.findLimit(getExample(entity), limit, SortUtils.formMap(order));
+    public List<T> selectByLimit(int limit, Sort sort) {
+        return repository.findLimit(limit, sort);
     }
 
     @Override
@@ -203,7 +136,33 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
         return repository.exists(weekend);
     }
 
-    public Example<T> getExample (T entity) {
-        return Example.of(entity, ExampleMatcher.matching().withIgnoreNullValues());
+    @Override
+    public int insertSelective(T entity) {
+        return repository.insertSelective(entity);
+    }
+
+    @Override
+    public long insertList(List<T> entities) {
+        return repository.insertList(entities);
+    }
+
+    @Override
+    public T updateById(T entity) {
+        return repository.updateById(entity);
+    }
+
+    @Override
+    public int updateByIdSelective(T entity) {
+        return repository.updateByIdSelective(entity);
+    }
+
+    @Override
+    public long updateSelective(T entity, T query) {
+        return repository.updateSelective(entity, getExample(query));
+    }
+
+    @Override
+    public long updateSelective(T entity, Weekend<T> weekend) {
+        return repository.updateSelective(entity, weekend);
     }
 }

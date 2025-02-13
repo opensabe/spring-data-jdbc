@@ -9,6 +9,9 @@ import java.util.Optional;
 public interface OptionalExecutor<T, ID> {
 
     Optional<T> findById (ID id);
+
+    Optional<T> findOne (Sort sort);
+
     Optional<T> findOne (Example<T> example);
     Optional<T> findOne (Example<T> example, Sort sort);
 

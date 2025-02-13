@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface ListPageAndSortingExecutor <T> {
 
+    List<T> findAll (Sort sort);
     List<T> findAll (Weekend<T> weekend);
     List<T> findAll (Weekend<T> weekend, Sort sort);
 

@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface ListByLimitExecutor<T> {
 
+    List<T> findLimit (int limit, Sort sort);
+
     List<T> findLimit (Weekend<T> weekend, int limit, Sort sort);
 
     List<T> findLimit (Example<T> example, int limit, Sort sort);

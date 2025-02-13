@@ -1,6 +1,7 @@
 package io.github.mado.jdbc.common.test.vo;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
@@ -11,6 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Role {
 
     @Id
+    @ReadOnlyProperty
     private Integer id;
 
     private String name;

@@ -100,6 +100,13 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     }
 
     @Override
+    public List<T> findLimit(int limit, Sort sort) {
+        List<T> list = new ArrayList<>(limit);
+        operations.findAll(Query.empty().limit(limit).sort(sort), clazz).forEach(list::add);
+        return list;
+    }
+
+    @Override
     public List<T> findLimit(Weekend<T> weekend, int limit, Sort sort) {
         return criteriaJdbcOperation.get().findAll(toQuery(weekend).limit(limit).sort(sort), weekend.getEntityClass());
     }
@@ -107,6 +114,13 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     @Override
     public List<T> findLimit(Example<T> example, int limit, Sort sort) {
         return criteriaJdbcOperation.get().findAll(toQuery(example).limit(limit).sort(sort), example.getProbeType());
+    }
+
+    @Override
+    public List<T> findAll(Sort sort) {
+        List<T> list = new ArrayList<>();
+        operations.findAll(clazz, sort).forEach(list::add);
+        return list;
     }
 
     @Override
@@ -150,6 +164,11 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     }
 
     @Override
+    public Page<T> findAll(Pageable pageable) {
+        return operations.findAll(Query.empty(), clazz, pageable);
+    }
+
+    @Override
     public Page<T> findAll(Weekend<T> weekend, Pageable pageable) {
         return criteriaJdbcOperation.get().findAll(toQuery(weekend), pageable, weekend.getEntityClass());
     }
@@ -157,6 +176,12 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     @Override
     public Page<T> findAll(Example<T> example, Pageable pageable) {
         return criteriaJdbcOperation.get().findAll(toQuery(example), pageable, example.getProbeType());
+    }
+
+
+    @Override
+    public T updateById(T entity) {
+        return operations.update(entity);
     }
 
     @Override
@@ -206,6 +231,11 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
             return criteriaJdbcOperation.get().findOne(toObjectQuery(example), clazz);
         }
         return Optional.ofNullable(operations.findById(id, clazz));
+    }
+
+    @Override
+    public Optional<T> findOne(Sort sort) {
+        return operations.findOne(Query.empty().limit(1).sort(sort), clazz);
     }
 
     @Override

@@ -8,6 +8,8 @@ import org.springframework.data.domain.Example;
  */
 public interface UpdateRepository<T> {
 
+    T updateById (T entity);
+
     int updateByIdSelective (T entity);
 
     long updateSelective (T entity, Weekend<T> weekend);
