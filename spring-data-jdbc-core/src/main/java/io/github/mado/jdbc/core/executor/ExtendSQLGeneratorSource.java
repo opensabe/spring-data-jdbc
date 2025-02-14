@@ -49,8 +49,8 @@ public class ExtendSQLGeneratorSource {
         this.context = context;
         this.converter = converter;
         this.exsitsExpression = dialect.getExistsFunction();
-        this.queryMapper = new QueryMapper(dialect, converter);;
-        this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());;
+        this.queryMapper = new QueryMapper(dialect, converter);
+        this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
         this.identifierProcessing = dialect.getIdentifierProcessing();
         this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
                 .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
@@ -78,14 +78,11 @@ public class ExtendSQLGeneratorSource {
 
         private final RelationalPersistentProperty id;
 
-
         private final String insertPrefix;
 
         private final String selectPrefix;
 
         private final String idCondition;
-
-        private final SelectBuilder.SelectAndFrom selectAndFrom;
 
         private final Lazy<String> deleteById = Lazy.of(this::getDeleteById);
         private final Lazy<String> deleteAll = Lazy.of(this::getDeleteAll);
@@ -138,7 +135,6 @@ public class ExtendSQLGeneratorSource {
                     .append(" from ").toString();
             SelectBuilder builder = Select.builder();
             List<Expression> expressions = selectColumns.stream().map(property -> Expressions.just(property.getColumnName().toSql(identifierProcessing))).toList();
-            this.selectAndFrom = builder.select(expressions);
 
         }
 
@@ -177,8 +173,8 @@ public class ExtendSQLGeneratorSource {
             return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
         }
 
-        public  <T> EntityRowMapper<T> getEntityRowMapper() {
-            return new EntityRowMapper<>((RelationalPersistentEntity<T>) entity, converter);
+        public  <T> RowMapper<T> getEntityRowMapper() {
+            return (RowMapper) rowMapper;
         }
 
         @SuppressWarnings("unchecked")
@@ -270,7 +266,7 @@ public class ExtendSQLGeneratorSource {
         }
 
         String findByIdTable (String table) {
-            return selectPrefix +  table + " where " + idCondition;
+            return selectPrefix +  identifierProcessing.quote(table) + " where " + idCondition;
         }
 
         String findAllByIdTable (String table, int size) {
@@ -280,12 +276,13 @@ public class ExtendSQLGeneratorSource {
 
 
         Pair<String, MapSqlParameterSource> findAllTable (Query query, String table) {
-
-            SelectBuilder.SelectFromAndJoin from = selectAndFrom.from(table);
+            Table t = Table.create(identifierProcessing.quote(table));
+            List<Expression> expressions = selectColumns.stream().map(property -> Expressions.just(property.getColumnName().toSql(identifierProcessing))).toList();
+            SelectBuilder.SelectFromAndJoin from = Select.builder().select(expressions).from(t);
 
             MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(Table.create(table), query, parameterSource, from);
+            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
 
             return Pair.of(sqlRenderer.render(selectOrdered.build()), parameterSource);
         }
@@ -294,11 +291,12 @@ public class ExtendSQLGeneratorSource {
 
         Pair<String, MapSqlParameterSource> findPageTable (Query query, Pageable pageable, String table) {
             Table t = Table.create(identifierProcessing.quote(table));
-            SelectBuilder.SelectFromAndJoin from = selectAndFrom.from(t);
+            List<Expression> expressions = selectColumns.stream().map(property -> Expressions.just(property.getColumnName().toSql(identifierProcessing))).toList();
+            SelectBuilder.SelectFromAndJoin from = Select.builder().select(expressions).from(t);
             MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
-            selectOrdered = applyPagination(pageable, selectOrdered);
-            selectOrdered.orderBy(pageable.getSort().stream().map(o -> OrderByField
+            selectOrdered = applyPagination(pageable, selectOrdered)
+                    .orderBy(pageable.getSort().stream().map(o -> OrderByField
                             .from(Expressions.just(entity.getPersistentProperty(o.getProperty()).getColumnName().getReference(identifierProcessing)), o.getDirection())
                             .withNullHandling(o.getNullHandling())
                     )
