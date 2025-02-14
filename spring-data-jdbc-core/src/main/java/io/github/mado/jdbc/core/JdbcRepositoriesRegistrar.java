@@ -11,6 +11,7 @@ import java.lang.annotation.Annotation;
 /**
  * @author heng.ma
  */
+@SuppressWarnings("NullableProblems")
 public class JdbcRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
     @Override
     protected Class<? extends Annotation> getAnnotation() {

@@ -9,6 +9,7 @@ import org.springframework.core.ResolvableType;
 /**
  * @author heng.ma
  */
+@SuppressWarnings("NullableProblems")
 public class BeanFactoryDelegate implements BeanFactory {
 
     private final BeanFactory delegate;

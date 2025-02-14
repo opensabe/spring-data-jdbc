@@ -22,7 +22,6 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
 
     private final Lazy<ArchiveService<T, ID>> archive;
 
-    @Autowired
     private BaseRepository<T, ID> repository;
 
 
@@ -37,12 +36,18 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Autowired
+    @SuppressWarnings("unused")
     public void setRelationalMappingContext(RelationalMappingContext relationalMappingContext) {
         this.tableName = relationalMappingContext.getRequiredPersistentEntity(entityClass).getQualifiedTableName().getReference();
     }
 
     public ArchiveService<T, ID> archive () {
         return archive.get();
+    }
+
+    @Autowired
+    public void setRepository(BaseRepository<T, ID> repository) {
+        this.repository = repository;
     }
 
     public BaseRepository<T, ID> getRepository() {
@@ -195,7 +200,8 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Override
-    public int deleteAllById(ID... ids) {
+    @SafeVarargs
+    public final int deleteAllById(ID... ids) {
         return repository.deleteAllById(ids);
     }
 

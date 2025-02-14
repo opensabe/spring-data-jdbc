@@ -107,13 +107,14 @@ public class ExtendSQLGeneratorSource {
 
             this.id = entity.getIdProperty();
 
-            this.idCondition = id.getColumnName().toSql(identifierProcessing) + "=:id";
+            this.idCondition = Optional.ofNullable(id)
+                    .map(RelationalPersistentProperty::getColumnName)
+                    .map(sqlIdentifier -> sqlIdentifier.toSql(identifierProcessing) + "=:id").orElse(null);
 
             StringBuilder insert = new StringBuilder("insert into ")
                     .append(table.getName().toSql(identifierProcessing))
                     .append(" ");
             StringBuilder select = new StringBuilder("select ");
-            SelectBuilder selectBuilder = Select.builder();
             entity.doWithAll(property -> {
                 selectColumns.add(property);
                 select.append(property.getColumnName().toSql(identifierProcessing)).append(",");
@@ -133,8 +134,6 @@ public class ExtendSQLGeneratorSource {
             this.insertPrefix = insert.toString();
             this.selectPrefix = select.deleteCharAt(select.length()-1)
                     .append(" from ").toString();
-            SelectBuilder builder = Select.builder();
-            List<Expression> expressions = selectColumns.stream().map(property -> Expressions.just(property.getColumnName().toSql(identifierProcessing))).toList();
 
         }
 
@@ -173,8 +172,8 @@ public class ExtendSQLGeneratorSource {
             return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
         }
 
-        public  <T> RowMapper<T> getEntityRowMapper() {
-            return (RowMapper) rowMapper;
+        public RowMapper<T> getEntityRowMapper() {
+            return rowMapper;
         }
 
         @SuppressWarnings("unchecked")
@@ -297,7 +296,7 @@ public class ExtendSQLGeneratorSource {
             SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
             selectOrdered = applyPagination(pageable, selectOrdered)
                     .orderBy(pageable.getSort().stream().map(o -> OrderByField
-                            .from(Expressions.just(entity.getPersistentProperty(o.getProperty()).getColumnName().getReference(identifierProcessing)), o.getDirection())
+                            .from(Expressions.just(entity.getRequiredPersistentProperty(o.getProperty()).getColumnName().getReference(identifierProcessing)), o.getDirection())
                             .withNullHandling(o.getNullHandling())
                     )
                     .toList());

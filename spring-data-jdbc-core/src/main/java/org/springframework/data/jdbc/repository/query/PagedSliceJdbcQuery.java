@@ -15,14 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
-
-import java.lang.reflect.Constructor;
-import java.sql.SQLType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
@@ -35,12 +27,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
-import org.springframework.data.repository.query.Parameter;
-import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.data.repository.query.ResultProcessor;
-import org.springframework.data.repository.query.SpelEvaluator;
-import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.data.repository.query.*;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -50,6 +37,15 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
+
+import java.lang.reflect.Constructor;
+import java.sql.SQLType;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
+import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.ResultProcessingConverter;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -75,12 +71,6 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     private BeanFactory beanFactory;
     private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
-
-    public PagedSliceJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-                               @Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
-                               QueryMethodEvaluationContextProvider evaluationContextProvider) {
-        this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter, evaluationContextProvider);
-    }
 
     /**
      * Creates a new {@link PagedSliceJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -135,6 +125,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         return queryExecution.execute(processSpelExpressions(objects, parameterMap, query), parameterMap);
     }
 
+    @SuppressWarnings("unchecked")
     private JdbcQueryExecution<?> wrapPageableQueryExecution(RelationalParameterAccessor accessor, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
         Pageable pageable = accessor.getPageable();
         parameterMap.addValue("offset", pageable.getOffset());
@@ -145,7 +136,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
             parameterMap.addValue("limit", pageable.getPageSize());
             queryExecution =  new PartTreeJdbcQuery.PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, pageable,
                     () -> {
-                        String querySql = getQueryMethod().getDeclaredQuery();
+                        String querySql = Objects.requireNonNull(getQueryMethod().getDeclaredQuery());
                         String countQuerySql = querySql.replaceFirst("(?i)select .*? from", "select count(*) from")
                                 .replaceFirst("(?i) order by .*", "");
                         Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuerySql, parameterMap);

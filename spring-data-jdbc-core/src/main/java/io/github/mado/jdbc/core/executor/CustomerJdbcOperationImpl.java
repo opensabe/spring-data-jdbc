@@ -201,6 +201,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
     }
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public <T> List<T> findAllById(Iterable<?> ids, Class<T> entityClass, String table) {
         ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Collection collection;
@@ -232,20 +233,21 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
     public <T> long count(Query query, Class<T> entityClass, String table) {
         ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.count(query, table);
-        return namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Long.class);
+        return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Long.class))
+                .orElse(0L);
     }
 
     @Override
     public <T> boolean exists(Query query, Class<T> entityClass, String table) {
         ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         Pair<String, MapSqlParameterSource> pair = generator.exists(query, table);
-        return namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Boolean.class);
+        return Boolean.TRUE.equals(namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Boolean.class));
     }
 
     @Override
     public <T> boolean existsById(Object id, Class<T> entityClass, String table) {
         ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         String sql = generator.existsById(table);
-        return namedParameterJdbcTemplate.queryForObject(sql, Map.of("id", id), Boolean.class);
+        return Boolean.TRUE.equals(namedParameterJdbcTemplate.queryForObject(sql, Map.of("id", id), Boolean.class));
     }
 }

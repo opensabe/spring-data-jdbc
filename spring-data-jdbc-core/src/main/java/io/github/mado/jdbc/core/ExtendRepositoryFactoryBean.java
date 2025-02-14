@@ -24,12 +24,14 @@ import org.springframework.util.ReflectionUtils;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * operations, dataAccessStrategy
  * @author heng.ma
  */
+@SuppressWarnings({"unused", "NullableProblems"})
 public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> extends JdbcRepositoryFactoryBean<T, S, ID> {
 
     private List<RepositoryFactoryCustomizer> repositoryFactoryCustomizers;
@@ -131,10 +133,11 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
 
 
 
+    @SuppressWarnings("unchecked")
     private <E> E getFiled (Class<E> type, String name) {
         Field field = ReflectionUtils.findField(this.getClass(), name, type);
-        field.setAccessible(true);
         try {
+            Objects.requireNonNull(field).setAccessible(true);
             return (E)field.get(this);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
