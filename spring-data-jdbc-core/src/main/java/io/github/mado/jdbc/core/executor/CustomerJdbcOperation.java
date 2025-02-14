@@ -1,6 +1,6 @@
 package io.github.mado.jdbc.core.executor;
 
-public interface CustomerJdbcOperation extends CriteriaJdbcOperation {
+public interface CustomerJdbcOperation extends CriteriaJdbcOperation, AssignmentJdbcOperation {
 
     int deleteById (Object id, Class<?> entityClass);
 

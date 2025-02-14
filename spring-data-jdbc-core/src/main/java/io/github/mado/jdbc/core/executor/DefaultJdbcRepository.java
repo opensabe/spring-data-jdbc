@@ -312,4 +312,102 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     public long deleteAll() {
         return criteriaJdbcOperation.get().deleteAll(clazz);
     }
+
+    @Override
+    public Optional<T> findById(ID id, String table) {
+        return criteriaJdbcOperation.get().findById(id, clazz, table);
+    }
+
+    @Override
+    public List<T> findAllById(Iterable<ID> ids, String table) {
+        if (unionkey) {
+            throw new UnsupportedOperationException("find by ids not supported for union key");
+        }
+        return criteriaJdbcOperation.get().findAllById(ids, clazz, table);
+    }
+
+    @Override
+    public List<T> findAll(Example<T> example, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(example), example.getProbeType(), table);
+    }
+
+    @Override
+    public List<T> findAll(Example<T> example, Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(example).sort(sort), example.getProbeType(), table);
+    }
+
+    @Override
+    public List<T> findAll(String table) {
+        return criteriaJdbcOperation.get().findAll(Query.empty(), clazz, table);
+    }
+
+    @Override
+    public List<T> findAll(Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(Query.empty().sort(sort), clazz, table);
+    }
+
+    @Override
+    public List<T> findAll(Weekend<T> weekend, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(weekend), weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public List<T> findAll(Weekend<T> weekend, Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(weekend).sort(sort), weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public Page<T> findAll(Pageable pageable, String table) {
+        return criteriaJdbcOperation.get().findAll(Query.empty(), pageable, clazz, table);
+    }
+
+    @Override
+    public Page<T> findAll(Weekend<T> weekend, Pageable pageable, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(weekend), pageable, weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public Page<T> findAll(Example<T> example, Pageable pageable, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(example), pageable, example.getProbeType(), table);
+    }
+
+    @Override
+    public List<T> findLimit(int limit, Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(Query.empty().limit(limit).sort(sort), clazz, table);
+    }
+
+    @Override
+    public List<T> findLimit(Weekend<T> weekend, int limit, Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(weekend).limit(limit).sort(sort), weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public List<T> findLimit(Example<T> example, int limit, Sort sort, String table) {
+        return criteriaJdbcOperation.get().findAll(toQuery(example).limit(limit).sort(sort), example.getProbeType(), table);
+    }
+
+    @Override
+    public boolean existsById(ID id, String table) {
+        return criteriaJdbcOperation.get().existsById(id, clazz, table);
+    }
+
+    @Override
+    public boolean exists(Weekend<T> weekend, String table) {
+        return criteriaJdbcOperation.get().exists(toQuery(weekend), weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public boolean exists(Example<T> example, String table) {
+        return criteriaJdbcOperation.get().exists(toQuery(example), example.getProbeType(), table);
+    }
+
+    @Override
+    public long count(Weekend<T> weekend, String table) {
+        return criteriaJdbcOperation.get().count(toQuery(weekend), weekend.getEntityClass(), table);
+    }
+
+    @Override
+    public long count(Example<T> example, String table) {
+        return criteriaJdbcOperation.get().count(toQuery(example), example.getProbeType(), table);
+    }
 }

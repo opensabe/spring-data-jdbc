@@ -1,5 +1,6 @@
 package io.github.mado.jdbc.core.executor;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
@@ -10,6 +11,7 @@ import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
@@ -17,10 +19,13 @@ import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -32,6 +37,7 @@ public class ExtendSQLGeneratorSource {
     private final SqlRenderer sqlRenderer;
     private final QueryMapper queryMapper;
     private final JdbcConverter converter;
+    private final Expression exsitsExpression;
     private final IdentifierProcessing identifierProcessing;
     private final PropertyAccessorCustomizer propertyAccessorCustomizer;
     @SuppressWarnings("rawtypes")
@@ -42,7 +48,7 @@ public class ExtendSQLGeneratorSource {
                               List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
         this.context = context;
         this.converter = converter;
-
+        this.exsitsExpression = dialect.getExistsFunction();
         this.queryMapper = new QueryMapper(dialect, converter);;
         this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());;
         this.identifierProcessing = dialect.getIdentifierProcessing();
@@ -75,8 +81,11 @@ public class ExtendSQLGeneratorSource {
 
         private final String insertPrefix;
 
+        private final String selectPrefix;
 
+        private final String idCondition;
 
+        private final SelectBuilder.SelectAndFrom selectAndFrom;
 
         private final Lazy<String> deleteById = Lazy.of(this::getDeleteById);
         private final Lazy<String> deleteAll = Lazy.of(this::getDeleteAll);
@@ -101,12 +110,16 @@ public class ExtendSQLGeneratorSource {
 
             this.id = entity.getIdProperty();
 
+            this.idCondition = id.getColumnName().toSql(identifierProcessing) + "=:id";
+
             StringBuilder insert = new StringBuilder("insert into ")
                     .append(table.getName().toSql(identifierProcessing))
                     .append(" ");
-
+            StringBuilder select = new StringBuilder("select ");
+            SelectBuilder selectBuilder = Select.builder();
             entity.doWithAll(property -> {
                 selectColumns.add(property);
+                select.append(property.getColumnName().toSql(identifierProcessing)).append(",");
                 if (property.isWritable()) {
                     insertColumns.add(property);
                 }
@@ -115,11 +128,18 @@ public class ExtendSQLGeneratorSource {
                 }
             });
 
-            String inserts = insertColumns.stream().map(p -> p.getColumnName().getReference(identifierProcessing)).collect(Collectors.joining(","));
+
+            String inserts = insertColumns.stream().map(p -> p.getColumnName().toSql(identifierProcessing)).collect(Collectors.joining(","));
 
             insert.append("(").append(inserts).append(")").append(" values ");
 
             this.insertPrefix = insert.toString();
+            this.selectPrefix = select.deleteCharAt(select.length()-1)
+                    .append(" from ").toString();
+            SelectBuilder builder = Select.builder();
+            List<Expression> expressions = selectColumns.stream().map(property -> Expressions.just(property.getColumnName().toSql(identifierProcessing))).toList();
+            this.selectAndFrom = builder.select(expressions);
+
         }
 
         public IdValueSource getIdValueSource() {
@@ -155,6 +175,10 @@ public class ExtendSQLGeneratorSource {
         @SuppressWarnings("unchecked")
         public PersistentPropertyAccessor<T> persistentPropertyAccessor (T instance) {
             return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
+        }
+
+        public  <T> EntityRowMapper<T> getEntityRowMapper() {
+            return new EntityRowMapper<>((RelationalPersistentEntity<T>) entity, converter);
         }
 
         @SuppressWarnings("unchecked")
@@ -245,6 +269,66 @@ public class ExtendSQLGeneratorSource {
             return Pair.of(sqlRenderer.render(update), parameterSource);
         }
 
+        String findByIdTable (String table) {
+            return selectPrefix +  table + " where " + idCondition;
+        }
+
+        String findAllByIdTable (String table, int size) {
+            String placeholder = IntStream.range(0, size).mapToObj(i -> "?").collect(Collectors.joining(","));
+            return selectPrefix +  table + " where " + id.getColumnName().toSql(identifierProcessing) + "in (" + placeholder +")";
+        }
+
+
+        Pair<String, MapSqlParameterSource> findAllTable (Query query, String table) {
+
+            SelectBuilder.SelectFromAndJoin from = selectAndFrom.from(table);
+
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(Table.create(table), query, parameterSource, from);
+
+            return Pair.of(sqlRenderer.render(selectOrdered.build()), parameterSource);
+        }
+
+
+
+        Pair<String, MapSqlParameterSource> findPageTable (Query query, Pageable pageable, String table) {
+            Table t = Table.create(identifierProcessing.quote(table));
+            SelectBuilder.SelectFromAndJoin from = selectAndFrom.from(t);
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
+            selectOrdered = applyPagination(pageable, selectOrdered);
+            selectOrdered.orderBy(pageable.getSort().stream().map(o -> OrderByField
+                            .from(Expressions.just(entity.getPersistentProperty(o.getProperty()).getColumnName().getReference(identifierProcessing)), o.getDirection())
+                            .withNullHandling(o.getNullHandling())
+                    )
+                    .toList());
+            return Pair.of(sqlRenderer.render(selectOrdered.build()), parameterSource);
+        }
+
+        Pair<String, MapSqlParameterSource> count (Query query, String table) {
+            Table t = Table.create(identifierProcessing.quote(table));
+            SelectBuilder.SelectFromAndJoin from = Select.builder().select(Functions.count(Expressions.just("1"))).from(t);
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
+            return Pair.of(sqlRenderer.render(selectOrdered.build()), parameterSource);
+        }
+
+        Pair<String, MapSqlParameterSource> exists (Query query, String table) {
+            Table t = Table.create(identifierProcessing.quote(table));
+            SelectBuilder.SelectFromAndJoin from = Select.builder().select(exsitsExpression).from(t);
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
+            return Pair.of(sqlRenderer.render(selectOrdered.build()), parameterSource);
+        }
+
+        String existsById (String table) {
+            return "select " + exsitsExpression.toString() +" from "
+                    + identifierProcessing.quote(table) +" where "
+                    + id.getColumnName().toSql(identifierProcessing)
+                    + " = :id";
+        }
+
         private IdValueSource idValueSource (RelationalPersistentProperty idProperty) {
             if (Objects.nonNull(idProperty) && !idProperty.isWritable()) {
                 return IdValueSource.GENERATED;
@@ -267,6 +351,62 @@ public class ExtendSQLGeneratorSource {
             return sqlRenderer.render(delete);
         }
 
+
+
+        private SelectBuilder.SelectOrdered applyQueryOnSelect(Table table, Query query, MapSqlParameterSource parameterSource,
+                                                               SelectBuilder.SelectWhere selectBuilder) {
+
+
+            SelectBuilder.SelectOrdered selectOrdered = query //
+                    .getCriteria() //
+                    .map(item -> this.applyCriteria(item, selectBuilder, parameterSource, table)) //
+                    .orElse(selectBuilder);
+
+            if (query.isSorted()) {
+                List<OrderByField> sort = queryMapper.getMappedSort(table, query.getSort(), entity);
+                selectOrdered = selectBuilder.orderBy(sort);
+            }
+
+            SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) selectOrdered;
+
+            if (query.getLimit() > 0) {
+                limitable = limitable.limit(query.getLimit());
+            }
+
+            if (query.getOffset() > 0) {
+                limitable = limitable.offset(query.getOffset());
+            }
+            return (SelectBuilder.SelectOrdered) limitable;
+        }
+
+        SelectBuilder.SelectOrdered applyCriteria(@Nullable CriteriaDefinition criteria,
+                                                  SelectBuilder.SelectWhere whereBuilder, MapSqlParameterSource parameterSource, Table table) {
+
+            return criteria == null || criteria.isEmpty() // Check for null and empty criteria
+                    ? whereBuilder //
+                    : whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity));
+        }
+
+        private SelectBuilder.SelectOrdered applyPagination(Pageable pageable, SelectBuilder.SelectOrdered select) {
+
+            if (!pageable.isPaged()) {
+                return select;
+            }
+
+            Assert.isTrue(select instanceof SelectBuilder.SelectLimitOffset,
+                    () -> String.format("Can't apply limit clause to statement of type %s", select.getClass()));
+
+            SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) select;
+            SelectBuilder.SelectLimitOffset limitResult = limitable.limitOffset(pageable.getPageSize(), pageable.getOffset());
+
+            Assert.state(limitResult instanceof SelectBuilder.SelectOrdered, String.format(
+                    "The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s",
+                    select.getClass()));
+
+            return (SelectBuilder.SelectOrdered) limitResult;
+        }
+
     }
+
 
 }

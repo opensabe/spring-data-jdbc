@@ -12,6 +12,7 @@ import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -152,6 +153,11 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
         return jdbcAggregateTemplate.count(query, entityClass);
     }
 
+    @Override
+    public <T> boolean exists(Query query, Class<T> entityClass) {
+        return jdbcAggregateTemplate.exists(query, entityClass);
+    }
+
 
     @Override
     public int deleteById(Object id, Class<?> entityClass) {
@@ -185,5 +191,61 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
     public int deleteAllById(Object[] ids, Class<?> entityClass) {
         ExtendSQLGeneratorSource.Generator<?> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
         return namedParameterJdbcTemplate.getJdbcTemplate().update(generator.deleteByIds(ids.length), ids);
+    }
+
+    @Override
+    public <T> Optional<T> findById(Object id, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        String sql = generator.findByIdTable(table);
+        return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, Map.of("id", id), generator.getEntityRowMapper()));
+    }
+
+    @Override
+    public <T> List<T> findAllById(Iterable<?> ids, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        Collection collection;
+        if (ids instanceof Collection c) {
+            collection = c;
+        }else {
+            collection = new ArrayList<>();
+            ids.forEach(collection::add);
+        }
+        String sql = generator.findAllByIdTable(table, collection.size());
+        return namedParameterJdbcTemplate.getJdbcTemplate().query(sql, generator.getEntityRowMapper(),collection.toArray());
+    }
+
+    @Override
+    public <T> List<T> findAll(Query query, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        Pair<String, MapSqlParameterSource> pair = generator.findAllTable(query, table);
+        return namedParameterJdbcTemplate.query(pair.getFirst(), pair.getSecond(), generator.getEntityRowMapper());
+    }
+
+    @Override
+    public <T> Page<T> findAll(Query query, Pageable pageable, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        Pair<String, MapSqlParameterSource> pair = generator.findPageTable(query, pageable, table);
+        return PageableExecutionUtils.getPage(namedParameterJdbcTemplate.query(pair.getFirst(), pair.getSecond(), generator.getEntityRowMapper()), pageable, () -> count(query, entityClass, table));
+    }
+
+    @Override
+    public <T> long count(Query query, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        Pair<String, MapSqlParameterSource> pair = generator.count(query, table);
+        return namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Long.class);
+    }
+
+    @Override
+    public <T> boolean exists(Query query, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        Pair<String, MapSqlParameterSource> pair = generator.exists(query, table);
+        return namedParameterJdbcTemplate.queryForObject(pair.getFirst(), pair.getSecond(), Boolean.class);
+    }
+
+    @Override
+    public <T> boolean existsById(Object id, Class<T> entityClass, String table) {
+        ExtendSQLGeneratorSource.Generator<T> generator = extendSQLGeneratorSource.simpleSqlGenerator(entityClass);
+        String sql = generator.existsById(table);
+        return namedParameterJdbcTemplate.queryForObject(sql, Map.of("id", id), Boolean.class);
     }
 }

@@ -33,7 +33,5 @@ public interface CriteriaJdbcOperation {
 
     <T> long count (Query query, Class<T> entityClass);
 
-    default<T>  boolean exists (Query query, Class<T> entityClass) {
-        return count(query, entityClass) > 0;
-    }
+    <T>  boolean exists (Query query, Class<T> entityClass);
 }

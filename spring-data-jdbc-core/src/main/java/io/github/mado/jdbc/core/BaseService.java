@@ -4,6 +4,8 @@ import io.github.mado.jdbc.core.lambda.Weekend;
 import io.github.mado.jdbc.core.repository.BaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 
 import java.util.List;
@@ -16,8 +18,13 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
 
     private final Class<T> entityClass;
 
+    private String tableName;
+
+    private final Lazy<ArchiveService<T, ID>> archive;
+
     @Autowired
     private BaseRepository<T, ID> repository;
+
 
     @SuppressWarnings("unchecked")
     public BaseService() {
@@ -25,6 +32,17 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
                 .of(this.getClass())
                 .getSuperTypeInformation(BaseService.class)
                 .getTypeArguments().get(0).getType();
+
+        this.archive = Lazy.of(() -> new ArchiveService<>(getRepository(), tableName+"_his"));
+    }
+
+    @Autowired
+    public void setRelationalMappingContext(RelationalMappingContext relationalMappingContext) {
+        this.tableName = relationalMappingContext.getRequiredPersistentEntity(entityClass).getQualifiedTableName().getReference();
+    }
+
+    public ArchiveService<T, ID> archive () {
+        return archive.get();
     }
 
     public BaseRepository<T, ID> getRepository() {
@@ -164,5 +182,30 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     @Override
     public long updateSelective(T entity, Weekend<T> weekend) {
         return repository.updateSelective(entity, weekend);
+    }
+
+    @Override
+    public int deleteById(ID id) {
+        return repository.deleteById(id);
+    }
+
+    @Override
+    public int deleteAllById(Iterable<ID> ids) {
+        return repository.deleteAllById(ids);
+    }
+
+    @Override
+    public int deleteAllById(ID... ids) {
+        return repository.deleteAllById(ids);
+    }
+
+    @Override
+    public long deleteAll(T entity) {
+        return repository.deleteAll(getExample(entity));
+    }
+
+    @Override
+    public long deleteAll(Weekend<T> weekend) {
+        return repository.deleteAll(weekend);
     }
 }

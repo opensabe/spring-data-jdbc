@@ -18,6 +18,7 @@ public interface BaseRepository<T, ID> extends
         ListPageAndSortingExecutor<T>,
         ListQueryExecutor<T, ID>,
         ExistsExecutor<T, ID>,
+        AssignmentTableQueryRepository<T, ID>,
         Repository<T, ID>
 {
 }

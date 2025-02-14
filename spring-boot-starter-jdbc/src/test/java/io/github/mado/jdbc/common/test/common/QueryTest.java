@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Import(UserService.class)
 @EnableJdbcRepositories(basePackageClasses = UserRepository.class)
-public class CommonTest extends BaseTest {
+public class QueryTest extends BaseTest {
 
 
     @Autowired
@@ -55,13 +55,20 @@ public class CommonTest extends BaseTest {
 
     @Test
     void testFindOneByNull () {
-        userService.selectOne();
+        Optional<User> optional = userService.selectOne();
+        assertThat(optional)
+                .isPresent()
+                .get()
+                .extracting(User::getAge)
+                .isEqualTo(0);
     }
 
     @Test
     void testPageByQueryMethod () {
         Page<User> page = userRepository.selectPage(PageRequest.of(0, 1));
-        System.out.println(page);
+        assertThat(page)
+                .hasSize(1);
+        Assertions.assertEquals(100, page.getTotalElements());
     }
 
     @Test
