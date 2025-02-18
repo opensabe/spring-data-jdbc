@@ -1,5 +1,7 @@
 package io.github.mado.jdbc.common.test.common;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.mado.jdbc.common.test.BaseTest;
 import io.github.mado.jdbc.common.test.common.repository.UserRepository;
 import io.github.mado.jdbc.common.test.common.service.UserService;
@@ -41,6 +43,8 @@ public class QueryTest extends BaseTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void truncateTable () {
@@ -291,8 +295,9 @@ public class QueryTest extends BaseTest {
     }
 
     @Test
-    public void testFindPageEntityOrder() {
+    public void testFindPageEntityOrder() throws JsonProcessingException {
         Page<User> page = userService.select(new User(), 1, 10,Sort.Direction.ASC, User::getAge);
+        System.out.println(objectMapper.writeValueAsString(page));
         Assertions.assertEquals(100, page.getTotalElements());
         assertThat(page)
                 .hasSize(10)

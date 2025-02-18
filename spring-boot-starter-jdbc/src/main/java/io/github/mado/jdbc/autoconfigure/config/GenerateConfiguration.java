@@ -6,6 +6,7 @@ import io.github.mado.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.mado.jdbc.core.executor.CustomerJdbcOperationImpl;
 import io.github.mado.jdbc.core.executor.ExtendSQLGeneratorSource;
 import io.github.mado.jdbc.core.executor.PropertyAccessorCustomizer;
+import io.github.mado.jdbc.core.jackson.PageSerializeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
  */
 @Configuration(proxyBeanMethods = false)
 public class GenerateConfiguration {
+
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -111,6 +113,9 @@ public class GenerateConfiguration {
         return new PropertyValueConversionService(conversions);
     }
 
-
-
+    @Bean
+    @ConditionalOnMissingBean
+    public PageSerializeModule pageSerializeModule () {
+        return new PageSerializeModule();
+    }
 }
