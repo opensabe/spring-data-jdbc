@@ -296,14 +296,14 @@ public class QueryTest extends BaseTest {
 
     @Test
     public void testFindPageEntityOrder() throws JsonProcessingException {
-        Page<User> page = userService.select(new User(), 1, 10,Sort.Direction.ASC, User::getAge);
+        Page<User> page = userService.select(new User(), 0, 10,Sort.Direction.ASC, User::getAge);
         System.out.println(objectMapper.writeValueAsString(page));
         Assertions.assertEquals(100, page.getTotalElements());
         assertThat(page)
                 .hasSize(10)
                 .map(User::getAge)
                 .containsExactly(0, 10, 20, 30, 40, 50, 60, 70, 80, 90);
-        page = userService.select(new User(), 2, 10,Sort.Direction.ASC, User::getAge);
+        page = userService.select(new User(), 1, 10,Sort.Direction.ASC, User::getAge);
         Assertions.assertEquals(100, page.getTotalElements());
         assertThat(page)
                 .hasSize(10)
@@ -316,13 +316,13 @@ public class QueryTest extends BaseTest {
         Weekend<User> weekend = Weekend.of(User.class);
         weekend.weekendCriteria()
                 .andGreaterThan(User::getAge, 9 * 10);
-        Page<User> page = userService.select(weekend, 1, 10,Sort.Direction.ASC, User::getAge);
+        Page<User> page = userService.select(weekend, 0, 10,Sort.Direction.ASC, User::getAge);
         Assertions.assertEquals(90, page.getTotalElements());
         assertThat(page)
                 .hasSize(10)
                 .map(User::getAge)
                 .containsExactly(100,110, 120, 130, 140, 150, 160, 170, 180, 190);
-        page = userService.select(weekend, 2, 10,Sort.Direction.ASC, User::getAge);
+        page = userService.select(weekend, 1, 10,Sort.Direction.ASC, User::getAge);
         Assertions.assertEquals(90, page.getTotalElements());
         assertThat(page)
                 .hasSize(10)

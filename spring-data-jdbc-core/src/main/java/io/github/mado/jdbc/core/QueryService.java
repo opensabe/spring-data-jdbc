@@ -107,38 +107,38 @@ public interface QueryService<T, ID> {
     Page<T> select (T entity, Pageable pageable);
 
     default Page<T> select (T entity, int pageNum, int pageSize) {
-        return select(entity, PageRequest.of(pageNum-1, pageSize));
+        return select(entity, PageRequest.of(pageNum, pageSize));
     }
 
     default Page<T> select(T entity, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
-        return select(entity, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formArray(order, properties)));
+        return select(entity, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
 
     default Page<T> select (T entity, int pageNum, int pageSize, Map<Fn<T, Object>, Sort.Direction> order) {
-        return select(entity, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formMap(order)));
+        return select(entity, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formMap(order)));
     }
     Page<T> select (Pageable pageable);
 
     default Page<T> select (int pageNum, int pageSize) {
-        return select(PageRequest.of(pageNum-1, pageSize));
+        return select(PageRequest.of(pageNum, pageSize));
     }
 
     default Page<T> select(int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
-        return select(PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formArray(order, properties)));
+        return select(PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
 
     default Page<T> select (int pageNum, int pageSize, Map<Fn<T, Object>, Sort.Direction> order) {
-        return select(PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formMap(order)));
+        return select(PageRequest.of(pageNum, pageSize).withSort(SortUtils.formMap(order)));
     }
 
     Page<T> select (Weekend<T> weekend, Pageable pageable);
 
     default Page<T> select(Weekend<T> weekend, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
-        return select(weekend, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formArray(order, properties)));
+        return select(weekend, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
 
     default Page<T> select (Weekend<T> weekend, int pageNum, int pageSize, Map<Fn<T, Object>, Sort.Direction> order) {
-        return select(weekend, PageRequest.of(pageNum-1, pageSize).withSort(SortUtils.formMap(order)));
+        return select(weekend, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formMap(order)));
     }
 
     default List<T> selectByLimit (Weekend<T> weekend, int limit) {

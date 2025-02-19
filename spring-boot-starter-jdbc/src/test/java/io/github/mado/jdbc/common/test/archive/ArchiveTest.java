@@ -91,7 +91,7 @@ public class ArchiveTest extends BaseTest {
         Weekend<User> weekend = Weekend.of(User.class);
         weekend.weekendCriteria()
                 .andGreaterThan(User::getAge, 4);
-        Page<User> page = service.select(weekend, 1, 2, Sort.Direction.DESC, User::getAge);
+        Page<User> page = service.select(weekend, 0, 2, Sort.Direction.DESC, User::getAge);
         Assertions.assertThat(page).hasSize(2)
                 .extracting(User::getAge)
                 .containsExactly(10, 9);
