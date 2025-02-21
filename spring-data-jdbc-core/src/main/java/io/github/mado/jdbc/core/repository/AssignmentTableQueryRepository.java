@@ -54,6 +54,7 @@ public interface AssignmentTableQueryRepository<T, ID>  {
 
     long count (Weekend<T> weekend, String table);
     long count (Example<T> example, String table);
+    long count (String table);
 
 
 

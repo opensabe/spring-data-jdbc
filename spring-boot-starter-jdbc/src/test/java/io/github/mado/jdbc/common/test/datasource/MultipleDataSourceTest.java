@@ -1,5 +1,7 @@
 package io.github.mado.jdbc.common.test.datasource;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.github.mado.jdbc.common.test.App;
 import io.github.mado.jdbc.common.test.MySQLContainer;
 import io.github.mado.jdbc.common.test.datasource.his.UserHisRepository;
@@ -7,10 +9,12 @@ import io.github.mado.jdbc.common.test.datasource.service.UserHisService;
 import io.github.mado.jdbc.common.test.datasource.service.UserService;
 import io.github.mado.jdbc.common.test.datasource.user.UserRepository;
 import io.github.mado.jdbc.core.EnableJdbcRepositories;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -57,12 +61,19 @@ public class MultipleDataSourceTest {
 
     @Test
     void setup () {
-        userService.getRepository().deleteAll();
-        hisService.getRepository().deleteAll();
-    }
-
-    @Test
-    void testInsert () {
-
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl("jdbc:mysql://localhost:3306/sys");
+        hikariConfig.setUsername("root");
+        hikariConfig.setPassword("123456");
+        HikariDataSource dataSource = new HikariDataSource(hikariConfig);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.update("truncate table t_user_his");
+        jdbcTemplate.update("insert into `t_user_his` (`id`, `name`, `email`, `age`) values (?,?,?,?)",
+                "id1", "name1", "email1", 1);
+        jdbcTemplate.update("truncate table t_user");
+        jdbcTemplate.update("insert into `t_user` (`id`, `name`, `email`, `age`) values (?,?,?,?)",
+                "id1", "name1", "email1", 1);
+        Assertions.assertEquals(0, hisService.count());
+        Assertions.assertEquals(1, userService.count());
     }
 }

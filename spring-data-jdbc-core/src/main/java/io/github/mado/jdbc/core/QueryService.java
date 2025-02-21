@@ -186,6 +186,8 @@ public interface QueryService<T, ID> {
 
     long count (T entity);
 
+    long count ();
+
     long count (Weekend<T> weekend);
 
     boolean exists (T entity);

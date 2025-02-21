@@ -410,4 +410,8 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     public long count(Example<T> example, String table) {
         return criteriaJdbcOperation.get().count(toQuery(example), example.getProbeType(), table);
     }
+    @Override
+    public long count(String table) {
+        return criteriaJdbcOperation.get().count(Query.empty(), clazz, table);
+    }
 }

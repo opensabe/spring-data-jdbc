@@ -115,6 +115,11 @@ public class ArchiveService<T, ID> implements QueryService<T, ID> {
     }
 
     @Override
+    public long count() {
+        return repository.count(table);
+    }
+
+    @Override
     public boolean exists(T entity) {
         return repository.exists(getExample(entity), table);
     }

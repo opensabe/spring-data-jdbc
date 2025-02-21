@@ -140,6 +140,11 @@ public abstract class BaseService<T, ID> implements IService<T, ID> {
     }
 
     @Override
+    public long count() {
+        return repository.count();
+    }
+
+    @Override
     public long count(T entity) {
         return repository.count(getExample(entity));
     }
