@@ -388,4 +388,13 @@ public class QueryTest extends BaseTest {
                 .extracting(User::getId)
                 .containsExactly("id3", "id2");
     }
+
+    @Test
+    void testMultipleParam () {
+        List<User> list = userRepository.selectByIdAndAge("id1", 10);
+        assertThat(list)
+                .hasSize(1)
+                .extracting(User::getEmail)
+                .containsExactly("email1");
+    }
 }

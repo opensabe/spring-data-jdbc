@@ -4,8 +4,6 @@ import jdk.jfr.Category;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
 import jdk.jfr.StackTrace;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * sql执行监控
