@@ -37,8 +37,6 @@ import com.sabegeek.common.jdbc.repository.api.BaseRepository;
 public record PK(String p1, String p2) {
 }
 
-;
-
 public class User extends PK {
 
     private String name;
