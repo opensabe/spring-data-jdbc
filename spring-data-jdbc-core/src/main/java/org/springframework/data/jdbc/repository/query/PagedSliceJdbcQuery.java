@@ -140,11 +140,10 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
     private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor,
                                                            ResultProcessor processor) {
+        RowMapper<?> rowMapper = determineRowMapper(processor, accessor.findDynamicProjection() != null);
+//        ResultSetExtractor<Object> resultSetExtractor = determineResultSetExtractor(rowMapper);
 
-        Supplier<RowMapper<?>> rowMapper = () -> determineRowMapper(processor, accessor.findDynamicProjection() != null);
-        ResultSetExtractor<Object> resultSetExtractor = determineResultSetExtractor(rowMapper);
-
-        return createReadingQueryExecution(resultSetExtractor, rowMapper);
+        return collectionQuery(rowMapper);
     }
     RowMapper<Object> determineRowMapper(ResultProcessor resultProcessor, boolean hasDynamicProjection) {
 
@@ -162,21 +161,6 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         }
 
         return cachedRowMapperFactory.getRowMapper();
-    }
-    @Nullable
-    ResultSetExtractor<Object> determineResultSetExtractor(Supplier<RowMapper<?>> rowMapper) {
-
-        if (cachedResultSetExtractorFactory.isConfiguredResultSetExtractor()) {
-
-            if (cachedResultSetExtractorFactory.requiresRowMapper() && !cachedRowMapperFactory.isConfiguredRowMapper()) {
-                return cachedResultSetExtractorFactory.getResultSetExtractor(rowMapper);
-            }
-
-            // configured ResultSetExtractor defaults to configured RowMapper in case both are configured
-            return cachedResultSetExtractorFactory.getResultSetExtractor();
-        }
-
-        return null;
     }
 
     private MapSqlParameterSource bindParameters(RelationalParameterAccessor accessor) {

@@ -65,10 +65,13 @@ public class ConverterConfiguration {
 
         private final List<Converter> converters;
 
-        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, List<Converter> converters) {
+        private final PropertyValueConversionService propertyValueConversionService;
+
+        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, List<Converter> converters, @Lazy PropertyValueConversionService propertyValueConversionService) {
             this.propertyValueConversions = propertyValueConversions;
 //            this.propertyAccessorCustomizer = propertyAccessorCustomizer.stream().reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
             this.converters = converters;
+            this.propertyValueConversionService = propertyValueConversionService;
         }
 
         @Override
@@ -133,7 +136,7 @@ public class ConverterConfiguration {
             JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
                     : JdbcArrayColumns.DefaultSupport.INSTANCE;
             DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
-            return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, converters);
+            return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, converters, propertyValueConversionService);
         }
     }
 }
