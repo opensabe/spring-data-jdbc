@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.convert.PropertyValueConversions;
 import org.springframework.data.convert.PropertyValueConverterFactory;
@@ -46,7 +47,7 @@ public class ConverterConfiguration {
     @Bean
     @Order
     public PropertyAccessorCustomizer PropertyValueConversionServiceAccessorCustomer(@Lazy PropertyValueConversionService propertyValueConversionService) {
-        return accessor -> new PropertyValueConversionServiceAccessor<>(accessor, propertyValueConversionService);
+        return accessor -> new PropertyValueConversionServiceAccessor(accessor, propertyValueConversionService);
     }
 
     @Bean
@@ -61,11 +62,13 @@ public class ConverterConfiguration {
         private ApplicationContext applicationContext;
 
         private final PropertyValueConversions propertyValueConversions;
-        private final PropertyAccessorCustomizer propertyAccessorCustomizer;
 
-        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, List<PropertyAccessorCustomizer> propertyAccessorCustomizer) {
+        private final List<Converter> converters;
+
+        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, List<Converter> converters) {
             this.propertyValueConversions = propertyValueConversions;
-            this.propertyAccessorCustomizer = propertyAccessorCustomizer.stream().reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
+//            this.propertyAccessorCustomizer = propertyAccessorCustomizer.stream().reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
+            this.converters = converters;
         }
 
         @Override
@@ -97,11 +100,11 @@ public class ConverterConfiguration {
             return super.dataAccessStrategyBean(operations, jdbcConverter, context, dialect);
         }
 
-        @Bean
-        @ConditionalOnMissingBean
-        public InsertStrategyFactory insertStrategyFactory(NamedParameterJdbcOperations operations, BatchJdbcOperations batchJdbcOperations, Dialect dialect) {
-            return new InsertStrategyFactory(operations, batchJdbcOperations, dialect);
-        }
+//        @Bean
+//        @ConditionalOnMissingBean
+//        public InsertStrategyFactory insertStrategyFactory(NamedParameterJdbcOperations operations, Dialect dialect) {
+//            return new InsertStrategyFactory(operations, dialect);
+//        }
 
 
         @Bean
@@ -130,7 +133,7 @@ public class ConverterConfiguration {
             JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
                     : JdbcArrayColumns.DefaultSupport.INSTANCE;
             DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
-            return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, dialect.getIdentifierProcessing(), propertyAccessorCustomizer);
+            return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, converters);
         }
     }
 }

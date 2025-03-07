@@ -1,5 +1,6 @@
 package io.github.opensabe.jdbc.converter;
 
+import org.springframework.core.env.Environment;
 import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -197,5 +198,10 @@ public class DelegateRelationalPersistentEntity<T> implements RelationalPersiste
     @Override
     public Iterator<RelationalPersistentProperty> iterator() {
         return delegate.iterator();
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        delegate.setEnvironment(environment);
     }
 }

@@ -56,7 +56,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
             RelationalPersistentProperty id = generator.getId();
             String[] keyNames = null;
             if (idGeneration.driverRequiresKeyColumnNames()) {
-                 keyNames = new String[]{id.getColumnName().getReference(identifierProcessing)};
+                 keyNames = new String[]{id.getColumnName().toSql(identifierProcessing)};
             }
             i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyNames), keyHolder);
             try {
@@ -88,7 +88,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
         if (IdValueSource.GENERATED.equals(generator.getIdValueSource())) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             RelationalPersistentProperty id = generator.getId();
-            String reference = id.getColumnName().getReference(identifierProcessing);
+            String reference = id.getColumnName().toSql(identifierProcessing);
             Map<T, PersistentPropertyAccessor<T>> accessors = triple.third();
             if (idGeneration.driverRequiresKeyColumnNames()) {
                 i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), new String[]{reference}), keyHolder);

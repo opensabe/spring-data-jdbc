@@ -54,10 +54,10 @@ public class PropertyValueConversionServiceAccessor<T> implements PersistentProp
         return value;
     }
 
-    @Override
-    public Object getProperty(PersistentPropertyPath<? extends PersistentProperty<?>> path) {
-        return this.getProperty(path.getRequiredLeafProperty());
-    }
+//    @Override
+//    public Object getProperty(PersistentPropertyPath<? extends PersistentProperty<?>> path) {
+//        return this.getProperty(path.getRequiredLeafProperty());
+//    }
 
     @Override
     public T getBean() {
