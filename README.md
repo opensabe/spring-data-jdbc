@@ -1,11 +1,3 @@
-## Feature
-
-1. json字段保存到s3，dynamdb
-2. 多数据源查从库s
-3. 优化代码，简化Repository实现
-4. 打印SQL参数
-
-
 ## 类型转换依赖关系，从上往下依赖
 
 ```java
@@ -73,8 +65,9 @@ void test() {
 **这里需要注意一下，spring data jdbc没有在实体类上标识是否是自增主键，而是在insert的过程中自动判断，判断的标准：**
 
 - 包含有@Id注解
+- 包含@ReadOnlyProperty注解
 - 主键数据类型为Long 或者Integer
-- 实体上主键为空或者为0
+
 
 **这三个条件都满足才会被判定为自增主键**
 
@@ -92,7 +85,11 @@ import com.sabegeek.common.jdbc.repository.api.BaseRepository;
 import org.springframework.util.Assert;
 
 public class Role {
+    
+    @Id
+    @ReadOnlyProperty
     private Integer id;
+    
     private String name;
 
     //忽略其他get set方法
