@@ -115,9 +115,13 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor);
         MapSqlParameterSource parameterMap = this.bindParameters(accessor);
         queryExecution = wrapPageableQueryExecution(accessor, parameterMap, queryExecution);
+        String query = evaluateExpressions(objects, accessor.getBindableParameters(), parameterMap);
+        return queryExecution.execute(enhancePageQuery(query), parameterMap);
+    }
 
-        return queryExecution.execute(evaluateExpressions(objects, accessor.getBindableParameters(), parameterMap),
-                parameterMap);
+    private String enhancePageQuery(String query) {
+        String original = query.trim().replace(";", "");
+        return String.format("%s limit :limit offset :offset", original);
     }
 
     private String evaluateExpressions(Object[] objects, Parameters<?, ?> bindableParameters,
