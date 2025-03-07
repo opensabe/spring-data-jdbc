@@ -5,19 +5,19 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.mado</groupId>
+        <groupId>io.github.opensabe-tech</groupId>
         <artifactId>spring-data-jdbc</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.github.mado</groupId>
+    <groupId>io.github.opensabe-tech</groupId>
     <artifactId>spring-data-jdbc-converter</artifactId>
 
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>io.github.mado</groupId>
+            <groupId>io.github.opensabe-tech</groupId>
             <artifactId>spring-data-jdbc-core</artifactId>
             <version>${project.version}</version>
         </dependency>
