@@ -3,7 +3,6 @@ package io.github.opensabe.jdbc.converter;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 import java.sql.ResultSet;
@@ -54,10 +53,6 @@ public class PropertyValueConversionServiceAccessor<T> implements PersistentProp
         return value;
     }
 
-//    @Override
-//    public Object getProperty(PersistentPropertyPath<? extends PersistentProperty<?>> path) {
-//        return this.getProperty(path.getRequiredLeafProperty());
-//    }
 
     @Override
     public T getBean() {

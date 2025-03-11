@@ -6,7 +6,6 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
-import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.RowDocumentAccessor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
