@@ -8,6 +8,8 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
 import org.springframework.data.relational.core.conversion.RowDocumentAccessor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -39,6 +41,10 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
         }
     }
 
+    @Override
+    public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance) {
+        return new PropertyValueConversionServiceAccessor<>(persistentEntity.getPropertyPathAccessor(instance), getConversionService(), propertyValueConversionService);
+    }
 
     @Override
     @NonNull

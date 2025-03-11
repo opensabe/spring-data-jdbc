@@ -3,10 +3,8 @@ package io.github.opensabe.jdbc.autoconfigure.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.opensabe.jdbc.converter.InternalConversions;
 import io.github.opensabe.jdbc.converter.InternalJdbcConverter;
-import io.github.opensabe.jdbc.converter.PropertyValueConversionServiceAccessor;
 import io.github.opensabe.jdbc.converter.SpecifyPropertyConverterFactory;
 import io.github.opensabe.jdbc.converter.extension.JsonPropertyValueConverter;
-import io.github.opensabe.jdbc.core.executor.PropertyAccessorCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
@@ -14,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.convert.PropertyValueConversions;
@@ -43,11 +40,11 @@ public class ConverterConfiguration {
     }
 
 
-    @Bean
-    @Order
-    public PropertyAccessorCustomizer PropertyValueConversionServiceAccessorCustomer(@Lazy PropertyValueConversionService propertyValueConversionService) {
-        return accessor -> new PropertyValueConversionServiceAccessor(accessor, propertyValueConversionService);
-    }
+//    @Bean
+//    @Order
+//    public PropertyAccessorCustomizer PropertyValueConversionServiceAccessorCustomer(@Lazy PropertyValueConversionService propertyValueConversionService) {
+//        return accessor -> new PropertyValueConversionServiceAccessor(accessor, propertyValueConversionService);
+//    }
 
     @Bean
     @ConditionalOnMissingBean

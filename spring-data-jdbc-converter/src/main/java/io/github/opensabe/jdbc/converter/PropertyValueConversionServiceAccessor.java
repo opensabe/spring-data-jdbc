@@ -1,8 +1,10 @@
 package io.github.opensabe.jdbc.converter;
 
+import org.springframework.core.convert.ConversionService;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 
 
 /**
@@ -10,48 +12,36 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
  * @param <T>
  * @author heng.ma
  */
-public class PropertyValueConversionServiceAccessor<T> implements PersistentPropertyAccessor<T> {
+public class PropertyValueConversionServiceAccessor<T> extends ConvertingPropertyAccessor<T> {
 
-    private final PersistentPropertyAccessor<T> delegate;
     private final PropertyValueConversionService propertyValueConversionService;
 
-    public PropertyValueConversionServiceAccessor(PersistentPropertyAccessor<T> delegate, PropertyValueConversionService propertyValueConversionService) {
-        this.delegate = delegate;
+    /**
+     * Creates a new {@link ConvertingPropertyAccessor} for the given delegate {@link PersistentPropertyAccessor} and
+     * {@link ConversionService}.
+     *
+     * @param accessor          must not be {@literal null}.
+     * @param conversionService must not be {@literal null}.
+     */
+    public PropertyValueConversionServiceAccessor(PersistentPropertyAccessor<T> accessor, ConversionService conversionService, PropertyValueConversionService propertyValueConversionService) {
+        super(accessor, conversionService);
         this.propertyValueConversionService = propertyValueConversionService;
     }
 
-    /**
-     * @param property must not be {@literal null}.
-     * @param value can be {@literal null}.
-     */
-    @Override
-    public void setProperty(PersistentProperty<?> property, Object value) {
-        PropertyValueConversionService service = propertyValueConversionService;
-        if (service.hasConverter(property)) {
-            value = service.read(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
-        }
-        delegate.setProperty(property, value);
-    }
-
-
-    /**
-     * see SimpleSqlGenerator
-     * @param property must not be {@literal null}.
-     * @return
-     */
     @Override
     public Object getProperty(PersistentProperty<?> property) {
-        Object value = delegate.getProperty(property);
-        PropertyValueConversionService service = propertyValueConversionService;
-        if (service.hasConverter(property)) {
-            value = service.write(value, (PersistentProperty) property, new DefaultValueConversionContext(property));
+        Object value = super.getProperty(property);
+        if (propertyValueConversionService.hasConverter(property)) {
+            value = propertyValueConversionService.write(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
         }
         return value;
     }
 
-
     @Override
-    public T getBean() {
-        return delegate.getBean();
+    public void setProperty(PersistentProperty<?> property, Object value) {
+        if (propertyValueConversionService.hasConverter(property)) {
+            value = propertyValueConversionService.read(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
+        }
+        super.setProperty(property, value);
     }
 }

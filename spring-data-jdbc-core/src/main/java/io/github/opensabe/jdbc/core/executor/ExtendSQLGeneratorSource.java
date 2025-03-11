@@ -39,21 +39,19 @@ public class ExtendSQLGeneratorSource {
     private final JdbcConverter converter;
     private final Expression exsitsExpression;
     private final IdentifierProcessing identifierProcessing;
-    private final PropertyAccessorCustomizer propertyAccessorCustomizer;
     @SuppressWarnings("rawtypes")
     private final Map<Class<?>, Generator> generators = new ConcurrentHashMap<>();
     public ExtendSQLGeneratorSource(RelationalMappingContext context,
                               JdbcConverter converter,
-                              Dialect dialect,
-                              List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
+                              Dialect dialect) {
         this.context = context;
         this.converter = converter;
         this.exsitsExpression = dialect.getExistsFunction();
         this.queryMapper = new QueryMapper(converter);
         this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
         this.identifierProcessing = dialect.getIdentifierProcessing();
-        this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
-                .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
+//        this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
+//                .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
     }
 
     @SuppressWarnings("unchecked")
@@ -169,7 +167,8 @@ public class ExtendSQLGeneratorSource {
 
         @SuppressWarnings("unchecked")
         public PersistentPropertyAccessor<T> persistentPropertyAccessor (T instance) {
-            return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
+//            return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
+            return converter.getPropertyAccessor(entity, instance);
         }
 
         public RowMapper<T> getEntityRowMapper() {
