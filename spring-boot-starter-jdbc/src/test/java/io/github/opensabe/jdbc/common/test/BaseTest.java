@@ -12,7 +12,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         properties = {
                 "spring.datasource.username=root",
                 "spring.datasource.password=123456",
-                "spring.datasource.url=jdbc:mysql://localhost:3306/sys",
+                "spring.datasource.url=jdbc:p6spy:mysql://localhost:3306/sys",
+                "spring.datasource.driver-class-name=com.p6spy.engine.spy.P6SpyDriver",
         },
         classes = App.class)
 public class BaseTest {
