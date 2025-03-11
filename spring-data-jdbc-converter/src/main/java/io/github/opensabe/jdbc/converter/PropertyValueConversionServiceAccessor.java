@@ -3,9 +3,6 @@ package io.github.opensabe.jdbc.converter;
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-
-import java.sql.ResultSet;
 
 
 /**
@@ -24,7 +21,6 @@ public class PropertyValueConversionServiceAccessor<T> implements PersistentProp
     }
 
     /**
-     * @see org.springframework.data.jdbc.core.convert.JdbcConverter#mapRow(RelationalPersistentEntity, ResultSet, Object)
      * @param property must not be {@literal null}.
      * @param value can be {@literal null}.
      */

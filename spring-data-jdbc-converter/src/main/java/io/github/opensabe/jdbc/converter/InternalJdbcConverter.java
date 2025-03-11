@@ -4,13 +4,16 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.PropertyValueConversionService;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
 import org.springframework.data.relational.core.conversion.RowDocumentAccessor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -24,6 +27,7 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
     private final PropertyValueConversionService propertyValueConversionService;
 
 
+    @SuppressWarnings("rawtypes")
     public InternalJdbcConverter(RelationalMappingContext context,
                                  RelationResolver relationResolver,
                                  CustomConversions conversions,
@@ -35,18 +39,15 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
         }
     }
 
-    @Override
-    public <R> R readAndResolve(TypeInformation<R> type, RowDocument source, Identifier identifier) {
-        return super.readAndResolve(type, source, identifier);
-    }
 
     @Override
-    protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor, ValueExpressionEvaluator evaluator, ConversionContext context) {
+    @NonNull
+    protected RelationalPropertyValueProvider newValueProvider(@NonNull RowDocumentAccessor documentAccessor, @NonNull ValueExpressionEvaluator evaluator, @NonNull ConversionContext context) {
         return new PropertyValueConversionValueProvider(super.newValueProvider(documentAccessor, evaluator, context), documentAccessor, evaluator);
     }
 
 
-    public class PropertyValueConversionValueProvider implements RelationalPropertyValueProvider {
+    class PropertyValueConversionValueProvider implements RelationalPropertyValueProvider {
 
         private final RelationalPropertyValueProvider delegate;
         private final RowDocumentAccessor documentAccessor;
@@ -59,22 +60,24 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
         }
 
         @Override
-        public boolean hasValue(RelationalPersistentProperty property) {
+        public boolean hasValue(@NonNull RelationalPersistentProperty property) {
             return delegate.hasValue(property);
         }
 
         @Override
-        public boolean hasNonEmptyValue(RelationalPersistentProperty property) {
+        public boolean hasNonEmptyValue(@NonNull RelationalPersistentProperty property) {
             return delegate.hasNonEmptyValue(property);
         }
 
         @Override
-        public RelationalPropertyValueProvider withContext(ConversionContext context) {
+        @NonNull
+        public RelationalPropertyValueProvider withContext(@NonNull ConversionContext context) {
             return new PropertyValueConversionValueProvider(delegate.withContext(context), documentAccessor, evaluator);
         }
 
         @Override
-        public <T> T getPropertyValue(RelationalPersistentProperty property) {
+        @SuppressWarnings("unchecked")
+        public <T> T getPropertyValue(@NonNull RelationalPersistentProperty property) {
             if (propertyValueConversionService.hasConverter(property)) {
                 String expression = property.getSpelExpression();
                 Object value = expression != null ? evaluator.evaluate(expression) : documentAccessor.get(property);
@@ -82,6 +85,7 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
                 if (value == null) {
                     return null;
                 }
+
                 return (T)propertyValueConversionService.read(value, property, new DefaultValueConversionContext<>(property));
             }
             return delegate.getPropertyValue(property);

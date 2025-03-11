@@ -2,6 +2,7 @@ package io.github.opensabe.jdbc.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,11 +26,13 @@ public class JacksonParameterizedTypeTypeReference<T> extends TypeReference<T> {
         List<TypeInformation<?>> arguments = information.getTypeArguments();
         this.type = new ParameterizedType() {
             @Override
+            @NonNull
             public Type[] getActualTypeArguments() {
                 return arguments.stream().map(TypeInformation::getType).toArray(Type[]::new);
             }
 
             @Override
+            @NonNull
             public Type getRawType() {
                 return information.getType();
             }
