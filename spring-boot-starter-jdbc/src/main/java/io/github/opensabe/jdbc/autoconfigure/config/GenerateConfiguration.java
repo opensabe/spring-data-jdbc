@@ -62,8 +62,8 @@ public class GenerateConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ExtendSQLGeneratorSource globalSQLGeneratorSource (RelationalMappingContext context, Dialect dialect, JdbcConverter converter, List<PropertyAccessorCustomizer> propertyAccessorCustomizers) {
-        return new ExtendSQLGeneratorSource(context, converter, dialect, propertyAccessorCustomizers);
+    public ExtendSQLGeneratorSource globalSQLGeneratorSource (RelationalMappingContext context, Dialect dialect, JdbcConverter converter) {
+        return new ExtendSQLGeneratorSource(context, converter, dialect);
     }
 
     @Bean
