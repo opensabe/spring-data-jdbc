@@ -12,7 +12,7 @@
 
     <groupId>io.github.opensabe-tech</groupId>
     <artifactId>spring-data-jdbc</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.5</version>
 
     <packaging>pom</packaging>
 
