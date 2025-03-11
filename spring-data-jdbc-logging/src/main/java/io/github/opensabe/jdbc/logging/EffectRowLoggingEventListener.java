@@ -10,6 +10,7 @@ import com.p6spy.engine.logging.LoggingEventListener;
 import java.sql.SQLException;
 
 /**
+ * 打印SQL以后再打印一下影响的行数（暂不支持select语句）
  * @author heng.ma
  */
 public class EffectRowLoggingEventListener extends LoggingEventListener {
@@ -37,6 +38,4 @@ public class EffectRowLoggingEventListener extends LoggingEventListener {
         super.onAfterExecuteBatch(statementInformation, timeElapsedNanos, updateCounts, e);
         P6LogQuery.log(Category.COMMIT, "", "SQL update affected "+updateCounts.length+" rows");
     }
-
-
 }
