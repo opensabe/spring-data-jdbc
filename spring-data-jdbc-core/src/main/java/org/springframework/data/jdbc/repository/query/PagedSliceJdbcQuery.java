@@ -15,6 +15,17 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.sql.SQLType;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.expression.ValueEvaluationContext;
@@ -25,24 +36,19 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
-import org.springframework.data.repository.query.*;
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
+import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.sql.SQLType;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -69,7 +75,6 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     private final ValueExpressionDelegate delegate;
 
     private final CachedRowMapperFactory cachedRowMapperFactory;
-    private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
 
     /**
      *
@@ -99,8 +104,8 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
         this.cachedRowMapperFactory = new CachedRowMapperFactory(
                 () -> rowMapperFactory.create(queryMethod.getResultProcessor().getReturnedType().getReturnedType()));
-        this.cachedResultSetExtractorFactory = new CachedResultSetExtractorFactory(
-                this.cachedRowMapperFactory::getRowMapper);
+        // this.cachedResultSetExtractorFactory = new CachedResultSetExtractorFactory(
+        //         this.cachedRowMapperFactory::getRowMapper);
 
 
         this.parsedQuery = rewriter.parse(queryMethod.getRequiredQuery());
@@ -159,9 +164,9 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
             RowMapper<Object> rowMapperToUse = rowMapperFactory.create(resultProcessor.getReturnedType().getDomainType());
 
-            JdbcQueryExecution.ResultProcessingConverter converter = new JdbcQueryExecution.ResultProcessingConverter(resultProcessor,
+            JdbcQueryExecution.ResultProcessingConverter _converter = new JdbcQueryExecution.ResultProcessingConverter(resultProcessor,
                     this.converter.getMappingContext(), this.converter.getEntityInstantiators());
-            return new ConvertingRowMapper<>(rowMapperToUse, converter);
+            return new ConvertingRowMapper<>(rowMapperToUse, _converter);
         }
 
         return cachedRowMapperFactory.getRowMapper();
@@ -341,71 +346,6 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
         public RowMapper<Object> getRowMapper() {
             return cachedRowMapper.get();
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    class CachedResultSetExtractorFactory {
-
-        private final Lazy<ResultSetExtractor<Object>> cachedResultSetExtractor;
-        private final boolean configuredResultSetExtractor;
-        private final @Nullable Constructor<? extends ResultSetExtractor> rowMapperConstructor;
-        private final @Nullable Constructor<? extends ResultSetExtractor> constructor;
-        private final Function<Supplier<RowMapper<?>>, ResultSetExtractor<Object>> resultSetExtractorFactory;
-
-        public CachedResultSetExtractorFactory(Supplier<RowMapper<?>> resultSetExtractor) {
-
-            String resultSetExtractorRef = getQueryMethod().getResultSetExtractorRef();
-            Class<? extends ResultSetExtractor> resultSetExtractorClass = getQueryMethod().getResultSetExtractorClass();
-
-            if (!ObjectUtils.isEmpty(resultSetExtractorRef)
-                    && !isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
-                throw new IllegalArgumentException(
-                        "Invalid ResultSetExtractor configuration. Configure either one but not both via @Query(resultSetExtractorRef = …, resultSetExtractorClass = …) for query method "
-                                + getQueryMethod());
-            }
-
-            this.configuredResultSetExtractor = !ObjectUtils.isEmpty(resultSetExtractorRef)
-                    || !isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class);
-
-            this.rowMapperConstructor = resultSetExtractorClass != null
-                    ? ClassUtils.getConstructorIfAvailable(resultSetExtractorClass, RowMapper.class)
-                    : null;
-            this.constructor = resultSetExtractorClass != null ?StringBasedJdbcQuery.findPrimaryConstructor(resultSetExtractorClass) : null;
-            this.resultSetExtractorFactory = rowMapper -> {
-
-                if (!ObjectUtils.isEmpty(resultSetExtractorRef)) {
-                    return rowMapperFactory.getResultSetExtractor(resultSetExtractorRef);
-                }
-
-                if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
-                    throw new UnsupportedOperationException("This should not happen");
-                }
-
-                if (rowMapperConstructor != null) {
-                    return BeanUtils.instantiateClass(rowMapperConstructor, rowMapper.get());
-                }
-
-                return BeanUtils.instantiateClass(constructor);
-            };
-
-            this.cachedResultSetExtractor = Lazy.of(() -> resultSetExtractorFactory.apply(resultSetExtractor));
-        }
-
-        public boolean isConfiguredResultSetExtractor() {
-            return configuredResultSetExtractor;
-        }
-
-        public ResultSetExtractor<Object> getResultSetExtractor() {
-            return cachedResultSetExtractor.get();
-        }
-
-        public ResultSetExtractor<Object> getResultSetExtractor(Supplier<RowMapper<?>> rowMapperSupplier) {
-            return resultSetExtractorFactory.apply(rowMapperSupplier);
-        }
-
-        public boolean requiresRowMapper() {
-            return rowMapperConstructor != null;
         }
     }
 
