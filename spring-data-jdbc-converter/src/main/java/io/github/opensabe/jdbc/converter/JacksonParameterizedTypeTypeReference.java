@@ -26,7 +26,7 @@ public class JacksonParameterizedTypeTypeReference<T> extends TypeReference<T> {
         this.type = new ParameterizedType() {
             @Override
             public Type[] getActualTypeArguments() {
-                return arguments.stream().map(TypeInformation::getType).toArray(Type[]::new);
+                return arguments.stream().map(t -> t.toTypeDescriptor().getResolvableType().getType()).toArray(Type[]::new);
             }
 
             @Override
