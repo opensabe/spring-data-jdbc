@@ -280,7 +280,7 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
         if (unionkey) {
             try {
                 T instance = clazz.getConstructor().newInstance();
-                BeanUtils.copyProperties(instance, id);
+                BeanUtils.copyProperties(id, instance);
                 var example = Example.of(instance, ExampleMatcher.matching().withIgnoreNullValues());
                 return Long.valueOf(deleteAll(example)).intValue();
             } catch (Throwable e) {
