@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author heng.ma
  */
+@SuppressWarnings("unused")
 @ConditionalOnClass(RepositoryObservationAdvice.class)
 @Configuration(proxyBeanMethods = false)
 public class ObservationConfiguration {
@@ -61,6 +62,7 @@ public class ObservationConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public JFRObservationHandler jdbcJFRObservationHandler (List<ObservationToJFRGenerator> generators) {
         return new JFRObservationHandler(generators);
     }

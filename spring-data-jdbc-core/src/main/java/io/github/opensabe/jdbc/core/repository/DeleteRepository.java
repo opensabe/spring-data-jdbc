@@ -12,6 +12,7 @@ public interface DeleteRepository <T, ID> {
 
     int deleteAllById (Iterable<ID> ids);
 
+    @SuppressWarnings("unchecked")
     int deleteAllById (ID ... ids);
 
     int deleteById (ID id);

@@ -30,7 +30,9 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     private final boolean unionkey;
 
-    public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
+    public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity,
+                                 //代理创建对象时参数定死了，参数个数、类型、顺序都不能变
+                                 @SuppressWarnings("unused") JdbcConverter converter) {
         this.operations = entityOperations;
         this.clazz = entity.getType();
         this.exampleMapper = Lazy.of(() -> ApplicationContextHolder.getBean(RelationalExampleMapper.class));
@@ -102,7 +104,7 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     @Override
     public List<T> findLimit(int limit, Sort sort) {
         List<T> list = new ArrayList<>(limit);
-        operations.findAll(Query.empty().limit(limit).sort(sort), clazz).forEach(list::add);
+        list.addAll(operations.findAll(Query.empty().limit(limit).sort(sort), clazz));
         return list;
     }
 
@@ -118,9 +120,7 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     @Override
     public List<T> findAll(Sort sort) {
-        List<T> list = new ArrayList<>();
-        operations.findAll(clazz, sort).forEach(list::add);
-        return list;
+        return new ArrayList<>(operations.findAll(clazz, sort));
     }
 
     @Override
@@ -300,6 +300,7 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public int deleteAllById(ID... ids) {
         if (unionkey) {
             throw new UnsupportedOperationException("delete by ids not supported for union key");

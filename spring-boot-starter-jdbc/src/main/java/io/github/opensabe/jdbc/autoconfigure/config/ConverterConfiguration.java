@@ -18,6 +18,7 @@ import org.springframework.data.convert.PropertyValueConversions;
 import org.springframework.data.convert.PropertyValueConverterFactory;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
@@ -35,35 +36,33 @@ import java.util.List;
 public class ConverterConfiguration {
     @Bean
     @ConditionalOnMissingBean
+    @SuppressWarnings("unused")
     public JsonPropertyValueConverter jsonPropertyValueConverter(ObjectMapper objectMapper) {
         return new JsonPropertyValueConverter(objectMapper);
     }
 
 
-//    @Bean
-//    @Order
-//    public PropertyAccessorCustomizer PropertyValueConversionServiceAccessorCustomer(@Lazy PropertyValueConversionService propertyValueConversionService) {
-//        return accessor -> new PropertyValueConversionServiceAccessor(accessor, propertyValueConversionService);
-//    }
-
     @Bean
     @ConditionalOnMissingBean
+    @SuppressWarnings("unused")
     public PropertyValueConverterFactory propertyValueConverterFactory(ApplicationContext applicationContext) {
         return new SpecifyPropertyConverterFactory(applicationContext);
     }
 
 
+    @SuppressWarnings("NullableProblems")
     public static class SmartJdbcConfiguration extends AbstractJdbcConfiguration {
 
         private ApplicationContext applicationContext;
 
         private final PropertyValueConversions propertyValueConversions;
 
+        @SuppressWarnings("rawtypes")
         private final List<Converter> converters;
 
         private final PropertyValueConversionService propertyValueConversionService;
 
-        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, List<Converter> converters, @Lazy PropertyValueConversionService propertyValueConversionService) {
+        public SmartJdbcConfiguration(PropertyValueConversions propertyValueConversions, @SuppressWarnings("rawtypes")List<Converter> converters, @Lazy PropertyValueConversionService propertyValueConversionService) {
             this.propertyValueConversions = propertyValueConversions;
 //            this.propertyAccessorCustomizer = propertyAccessorCustomizer.stream().reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
             this.converters = converters;
@@ -115,7 +114,8 @@ public class ConverterConfiguration {
                                            NamedParameterJdbcOperations operations,
                                            @Lazy RelationResolver relationResolver,
                                            JdbcCustomConversions conversions, Dialect dialect) {
-            JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
+            org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect jd
+                    ? jd.getArraySupport()
                     : JdbcArrayColumns.DefaultSupport.INSTANCE;
             DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
             return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, converters, propertyValueConversionService);

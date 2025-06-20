@@ -21,16 +21,18 @@ public class SpecifyPropertyConverterFactory implements PropertyValueConverterFa
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <DV, SV, P extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, P> getConverter(PersistentProperty<?> property) {
         Converter converter = property.findAnnotation(Converter.class);
         if (Objects.nonNull(converter)) {
+
             return this.getConverter((Class<? extends PropertyValueConverter<DV,SV,P>>) converter.value());
         }
         return null;
     }
 
     @Override
-    public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(Class<? extends PropertyValueConverter<DV, SV, C>> converterType) {
+    public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(@SuppressWarnings("NullableProblems") Class<? extends PropertyValueConverter<DV, SV, C>> converterType) {
         return applicationContext.getBean(converterType);
     }
 }

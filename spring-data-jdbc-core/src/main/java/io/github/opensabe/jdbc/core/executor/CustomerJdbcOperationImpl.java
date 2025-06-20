@@ -138,9 +138,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
     @Override
     public <T> List<T> findAll(Query query, Class<T> entityClass) {
-        List<T> list =new ArrayList<>();
-        jdbcAggregateTemplate.findAll(query, entityClass).forEach(list::add);
-        return list;
+        return new ArrayList<>(jdbcAggregateTemplate.findAll(query, entityClass));
     }
 
     @Override

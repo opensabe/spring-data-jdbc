@@ -12,6 +12,7 @@ import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
  * @param <T>
  * @author heng.ma
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class PropertyValueConversionServiceAccessor<T> extends ConvertingPropertyAccessor<T> {
 
     private final PropertyValueConversionService propertyValueConversionService;
@@ -29,7 +30,7 @@ public class PropertyValueConversionServiceAccessor<T> extends ConvertingPropert
     }
 
     @Override
-    public Object getProperty(PersistentProperty<?> property) {
+    public Object getProperty(@SuppressWarnings("NullableProblems")PersistentProperty<?> property) {
         Object value = super.getProperty(property);
         if (propertyValueConversionService.hasConverter(property)) {
             value = propertyValueConversionService.write(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
@@ -38,7 +39,7 @@ public class PropertyValueConversionServiceAccessor<T> extends ConvertingPropert
     }
 
     @Override
-    public void setProperty(PersistentProperty<?> property, Object value) {
+    public void setProperty(@SuppressWarnings("NullableProblems")PersistentProperty<?> property, Object value) {
         if (propertyValueConversionService.hasConverter(property)) {
             value = propertyValueConversionService.read(value, (PersistentProperty)property, new DefaultValueConversionContext(property));
         }

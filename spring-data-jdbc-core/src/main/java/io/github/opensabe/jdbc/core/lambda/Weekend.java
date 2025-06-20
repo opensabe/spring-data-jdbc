@@ -13,9 +13,6 @@ public class Weekend<T> {
     private WeekendCriteria<T,Object> weekendCriteria;
 
     private final List<String> columns = new ArrayList<>();
-//    private Integer limit;
-//    private Sort sort;
-//    private Long offset;
 
     private Weekend(Class<T> entityClass) {
         this.entityClass = entityClass;
@@ -33,11 +30,6 @@ public class Weekend<T> {
         return result;
     }
 
-//    public Weekend<T> with (Pageable pageable) {
-//        this.offset = pageable.getOffset();
-//        this.sort = pageable.getSort();
-//        return this;
-//    }
 
     @SafeVarargs
     public final Weekend<T> columns(Fn<T, Object>... fns) {
@@ -45,20 +37,6 @@ public class Weekend<T> {
         return this;
     }
 
-//    public Weekend<T> limit (Integer limit) {
-//        this.limit = limit;
-//        return this;
-//    }
-//
-//    public Weekend<T> sort (Sort sort) {
-//        this.sort = sort;
-//        return this;
-//    }
-//
-//    public Weekend<T> offset (long offset) {
-//        this.offset = offset;
-//        return this;
-//    }
 
     public void or(WeekendCriteria<T, Object> criteria) {
         this.weekendCriteria.or(criteria);
@@ -73,15 +51,6 @@ public class Weekend<T> {
         if (!columns.isEmpty()) {
             query = query.columns(columns);
         }
-//        if (Objects.nonNull(limit)) {
-//            query = query.limit(limit);
-//        }
-//        if (Objects.nonNull(sort)) {
-//            query = query.sort(sort);
-//        }
-//        if (Objects.nonNull(offset)) {
-//            query = query.offset(offset);
-//        }
         return query;
     }
 

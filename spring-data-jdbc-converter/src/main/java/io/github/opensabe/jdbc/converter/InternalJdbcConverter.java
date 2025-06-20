@@ -24,6 +24,7 @@ import java.util.List;
  * @see JdbcConverter#readValue(Object, TypeInformation)
  * @author heng.ma
  */
+
 public class InternalJdbcConverter extends MappingJdbcConverter {
 
     private final PropertyValueConversionService propertyValueConversionService;
@@ -42,7 +43,8 @@ public class InternalJdbcConverter extends MappingJdbcConverter {
     }
 
     @Override
-    public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance) {
+    @NonNull
+    public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, @SuppressWarnings("NullableProblems")T instance) {
         return new PropertyValueConversionServiceAccessor<>(persistentEntity.getPropertyPathAccessor(instance), getConversionService(), propertyValueConversionService);
     }
 

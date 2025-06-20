@@ -50,8 +50,6 @@ public class ExtendSQLGeneratorSource {
         this.queryMapper = new QueryMapper(converter);
         this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
         this.identifierProcessing = dialect.getIdentifierProcessing();
-//        this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
-//                .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
     }
 
     @SuppressWarnings("unchecked")
@@ -165,7 +163,6 @@ public class ExtendSQLGeneratorSource {
         }
 
 
-        @SuppressWarnings("unchecked")
         public PersistentPropertyAccessor<T> persistentPropertyAccessor (T instance) {
 //            return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
             return converter.getPropertyAccessor(entity, instance);
@@ -175,7 +172,6 @@ public class ExtendSQLGeneratorSource {
             return rowMapper;
         }
 
-        @SuppressWarnings("unchecked")
         Triple<String, Object[], PersistentPropertyAccessor<T>> insertSelective (T instance) {
             StringBuilder sql = new StringBuilder("insert into ");
             sql.append(table.getName().toSql(identifierProcessing));
@@ -198,7 +194,6 @@ public class ExtendSQLGeneratorSource {
             return Triple.of(sql.toString(), args.toArray(), accessor);
         }
 
-        @SuppressWarnings("unchecked")
         Triple<String, Object[], Map<T, PersistentPropertyAccessor<T>>> insertList (Collection<T> instances) {
             int size = instances.size();
             Map<T, PersistentPropertyAccessor<T>> accessors = new IdentityHashMap<>(size);

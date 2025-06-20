@@ -26,11 +26,15 @@ import java.util.UUID;
 @EnableJdbcRepositories(basePackageClasses = UserRepository.class)
 public class UpdateTest extends BaseTest {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public UpdateTest(UserService userService, JdbcTemplate jdbcTemplate) {
+        this.userService = userService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @BeforeEach
     void truncateTable () {
@@ -81,6 +85,9 @@ public class UpdateTest extends BaseTest {
 
         //测试createTime跟updateTime默认值，insert时值相同
         User before = userService.selectInstanceById(old.getId());
+
+        Assertions.assertNotNull(before);
+
         Assertions.assertEquals(before.getCreateTime(), before.getUpdateTime());
 
         //执行update
@@ -107,8 +114,8 @@ public class UpdateTest extends BaseTest {
         //before delete, the count in db is 1
         Assertions.assertEquals(1, count);
 
-        userService.deleteById(user.getId());
-
+        int i = userService.deleteById(user.getId());
+        Assertions.assertEquals(1, i);
         //after delete assert the count is 0
         long zero = userService.getRepository().count();
         Assertions.assertEquals(0, zero);
@@ -139,8 +146,8 @@ public class UpdateTest extends BaseTest {
 
         Assertions.assertEquals(list.size(), count);
 
-        userService.deleteAllById(list.stream().map(User::getId).limit(3).toList());
-
+        int i = userService.deleteAllById(list.stream().map(User::getId).limit(3).toList());
+        Assertions.assertEquals(3, i);
         long remain = userService.getRepository().count();
 
         Assertions.assertEquals(list.size() - 3, remain);
@@ -183,6 +190,8 @@ public class UpdateTest extends BaseTest {
 
         User current = userService.selectInstanceById(user.getId());
 
+        Assertions.assertNotNull(current);
+
         Assertions.assertEquals(update.getName(), current.getName());
         Assertions.assertEquals(update.getAge(), current.getAge());
         Assertions.assertEquals(user.getEmail(), current.getEmail());
@@ -224,5 +233,53 @@ public class UpdateTest extends BaseTest {
         long realCount = userService.getRepository().count();
 
         Assertions.assertEquals(100, realCount);
+    }
+
+    @Test
+    void testUpdateById () {
+        String  id = UUID.randomUUID().toString();
+
+        User user = new User();
+        user.setId(id);
+        user.setName("name1");
+
+        LocalDateTime useless = LocalDateTime.now().minusDays(1);
+
+        user.setCreateTime(useless);
+        user.setUpdateTime(useless);
+
+        userService.insertSelective(user);
+        user.setName("name2");
+
+        User updated = userService.updateById(user);
+
+        Assertions.assertNotNull(updated);
+        Assertions.assertEquals("name2", updated.getName());
+
+        User optional = userService.selectInstanceById(id);
+
+        Assertions.assertNotNull(optional);
+
+        Assertions.assertEquals("name2", optional.getName());
+
+    }
+
+    @Test
+    void testDeleteByIds () {
+        List<User> list = new ArrayList<>(10);
+        String[] ids = new String[10];
+        for (int i = 0; i < 10; i++) {
+            User user = new User("id" + i, "name" + i, "email", i);
+            list.add(user);
+            ids[i] = user.getId();
+        }
+        userService.insertList(list);
+
+        Assertions.assertEquals(10, userService.count());
+
+        int i = userService.deleteAllById(ids);
+
+        Assertions.assertEquals(10, i);
+        Assertions.assertEquals(0, userService.count());
     }
 }

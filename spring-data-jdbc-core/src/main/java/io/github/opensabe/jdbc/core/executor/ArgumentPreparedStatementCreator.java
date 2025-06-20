@@ -4,9 +4,11 @@ import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.ParameterDisposer;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import org.springframework.lang.NonNull;
 
 import java.sql.*;
 
+@SuppressWarnings("unused")
 public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementSetter implements PreparedStatementCreator, ParameterDisposer, SqlProvider {
 
     private final String sql;
@@ -37,7 +39,8 @@ public class ArgumentPreparedStatementCreator extends ArgumentPreparedStatementS
     }
 
     @Override
-    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+    @NonNull
+    public PreparedStatement createPreparedStatement(@NonNull Connection con) throws SQLException {
         PreparedStatement ps;
         if (keyColumnNames != null || autoincr) {
             if (keyColumnNames !=null && keyColumnNames.length > 1) {
