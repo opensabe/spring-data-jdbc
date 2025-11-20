@@ -112,8 +112,8 @@ public class DefaultDataSourceConfiguration {
                                                   @Qualifier("namedParameterJdbcOperations") NamedParameterJdbcOperations operations,
                                                   Dialect dialect) {
         return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
-                jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter, dialect),
-                new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect));
+                jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter),
+                new InsertStrategyFactory(operations, dialect));
     }
 
     @Bean

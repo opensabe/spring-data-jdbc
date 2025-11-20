@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,22 +30,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author heng.ma
  */
+@SuppressWarnings("unchecked")
 @Import(UserService.class)
 @EnableJdbcRepositories(basePackageClasses = UserRepository.class)
 public class QueryTest extends BaseTest {
 
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final UserRepository userRepository;
+
+    private final JdbcTemplate jdbcTemplate;
+
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    public QueryTest(UserService userService, UserRepository userRepository, JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.jdbcTemplate = jdbcTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @BeforeEach
     void truncateTable () {
@@ -186,6 +192,25 @@ public class QueryTest extends BaseTest {
     }
 
     @Test
+    void findOneByOrder() {
+        Optional<User> optional = userService.selectOne(Map.of(User::getAge, Sort.Direction.DESC));
+        assertThat(optional)
+                .isPresent()
+                .get()
+                .extracting(User::getAge)
+                .isEqualTo(990);
+    }
+
+    @Test
+    void findOneByOrder1() {
+        Optional<User> optional = userService.selectOne(Sort.Direction.DESC, User::getAge);
+        assertThat(optional)
+                .isPresent()
+                .get()
+                .extracting(User::getAge)
+                .isEqualTo(990);
+    }
+    @Test
     public void findOneByEntity() {
         User query = new User();
         query.setName("name1");
@@ -204,6 +229,19 @@ public class QueryTest extends BaseTest {
         User query = new User();
         query.setName("name1");
         Optional<User> optional = userService.selectOne(query, Sort.Direction.DESC, User::getId);
+        assertThat(optional)
+                .isPresent()
+                .get()
+                .extracting(User::getId)
+                .isEqualTo("id111");
+    }
+    @Test
+    public void findOneByEntityOrder1() {
+        User user = new User("id111", "name1", "email1", 10);
+        userService.insertSelective(user);
+        User query = new User();
+        query.setName("name1");
+        Optional<User> optional = userService.selectOne(query, Map.of(User::getId, Sort.Direction.DESC));
         assertThat(optional)
                 .isPresent()
                 .get()
@@ -230,6 +268,18 @@ public class QueryTest extends BaseTest {
         weekend.weekendCriteria()
                 .andLike(User::getId, "id%");
         Optional<User> optional = userService.selectOne(weekend, Sort.Direction.DESC, User::getId);
+        assertThat(optional)
+                .isPresent()
+                .get()
+                .extracting(User::getName)
+                .isEqualTo("name99");
+    }
+    @Test
+    public void findOneByWeekendOrder1() {
+        Weekend<User> weekend = Weekend.of(User.class);
+        weekend.weekendCriteria()
+                .andLike(User::getId, "id%");
+        Optional<User> optional = userService.selectOne(weekend, Map.of(User::getId, Sort.Direction.DESC));
         assertThat(optional)
                 .isPresent()
                 .get()
@@ -273,6 +323,7 @@ public class QueryTest extends BaseTest {
         userService.insertSelective(user);
         User query = new User();
         query.setName("name1");
+        @SuppressWarnings("unchecked")
         List<User> list = userService.select(query, Sort.Direction.DESC, User::getId);
         assertThat(list)
                 .hasSize(2)
@@ -303,6 +354,7 @@ public class QueryTest extends BaseTest {
                 .hasSize(10)
                 .map(User::getAge)
                 .containsExactly(0, 10, 20, 30, 40, 50, 60, 70, 80, 90);
+
         page = userService.select(new User(), 1, 10,Sort.Direction.ASC, User::getAge);
         Assertions.assertEquals(100, page.getTotalElements());
         assertThat(page)
@@ -330,6 +382,28 @@ public class QueryTest extends BaseTest {
                 .containsExactly("name20","name21", "name22", "name23", "name24", "name25", "name26", "name27", "name28", "name29");
     }
 
+    @Test
+    public void findLimit() {
+        List<User> list = userService.selectByLimit(2);
+        assertThat(list).hasSize(2);
+
+    }
+    @Test
+    public void findLimitByOrder() {
+        List<User> list = userService.selectByLimit(2, Sort.Direction.ASC, User::getAge);
+        assertThat(list).hasSize(2)
+                .map(User::getName)
+                .containsExactly("name0","name1");
+
+    }
+    @Test
+    public void findLimitByOrder1() {
+        List<User> list = userService.selectByLimit(2, Map.of(User::getAge, Sort.Direction.ASC));
+        assertThat(list).hasSize(2)
+                .map(User::getName)
+                .containsExactly("name0","name1");
+
+    }
     @Test
     public void findLimitByEntity() {
         User user = new User("id111", "name1", "email1", 10);
@@ -364,6 +438,22 @@ public class QueryTest extends BaseTest {
                 .extracting(User::getId)
                 .containsExactly(  "id222", "id111");
     }
+    @Test
+    public void findLimitByEntityOrder1() {
+        User user = new User("id111", "name1", "email1", 10);
+        User user1 = new User("id222", "name1", "email1", 10);
+        userService.insertList(List.of(user1,user));
+        User query = new User();
+        query.setName("name1");
+        query.setAge(10);
+        long count = userService.count(query);
+        Assertions.assertEquals(3, count);
+        List<User> list = userService.selectByLimit(query, 2, Map.of(User::getId, Sort.Direction.DESC));
+        assertThat(list)
+                .hasSize(2)
+                .extracting(User::getId)
+                .containsExactly(  "id222", "id111");
+    }
 
     @Test
     public void findLimitByWeekend() {
@@ -383,6 +473,17 @@ public class QueryTest extends BaseTest {
         weekend.weekendCriteria()
                 .andIn(User::getId, "id1", "id2", "id3");
         List<User> list = userService.selectByLimit(weekend, 2, Sort.Direction.DESC, User::getId);
+        assertThat(list)
+                .hasSize(2)
+                .extracting(User::getId)
+                .containsExactly("id3", "id2");
+    }
+    @Test
+    public void findLimitByWeekendOrder1() {
+        Weekend<User> weekend = Weekend.of(User.class);
+        weekend.weekendCriteria()
+                .andIn(User::getId, "id1", "id2", "id3");
+        List<User> list = userService.selectByLimit(weekend, 2, Map.of(User::getId, Sort.Direction.DESC));
         assertThat(list)
                 .hasSize(2)
                 .extracting(User::getId)

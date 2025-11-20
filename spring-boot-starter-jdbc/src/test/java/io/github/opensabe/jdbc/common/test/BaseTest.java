@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public class BaseTest {
 
     @Container
+    @SuppressWarnings("unused")
     final static MySQLContainer mysql = new MySQLContainer()
             .withFixedExposedPort(3306, 3306);
 

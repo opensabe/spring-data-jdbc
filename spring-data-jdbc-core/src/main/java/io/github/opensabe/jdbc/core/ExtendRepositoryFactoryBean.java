@@ -16,8 +16,9 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.ReflectionUtils;
 
@@ -108,20 +109,22 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
         EntityCallbacks entityCallbacks = getFiled(EntityCallbacks.class, "entityCallbacks");
         BeanFactory beanFactory = getFiled(BeanFactory.class, "beanFactory");
 
+
+
         JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
                 converter, dialect, publisher, operations) {
+
             @Override
-            protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-                return super.getQueryLookupStrategy(key, evaluationContextProvider).map(s ->
-                         (method, metadata, factory, namedQueries) -> {
-                            try {
-                                return s.resolveQuery(method, metadata, factory, namedQueries);
-                            }catch (UnsupportedOperationException e) {
-                                 return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, beanFactory,evaluationContextProvider)
-                                         .resolveQuery(method, metadata, factory, namedQueries);
-                            }
-                        }
-                );
+            protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key, ValueExpressionDelegate valueExpressionDelegate) {
+                return super.getQueryLookupStrategy(key, valueExpressionDelegate).map(s ->
+                    (method, metadata, factory, namedQueries) ->{
+                    try {
+                        return s.resolveQuery(method, metadata, factory, namedQueries);
+                    }catch (UnsupportedOperationException e) {
+                        return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, new CachingValueExpressionDelegate(valueExpressionDelegate))
+                                .resolveQuery(method, metadata, factory, namedQueries);
+                    }
+                });
             }
         };
         jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
