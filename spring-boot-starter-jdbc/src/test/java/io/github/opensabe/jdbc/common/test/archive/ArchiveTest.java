@@ -26,13 +26,15 @@ import java.util.Optional;
 @EnableJdbcRepositories(basePackageClasses = UserRepository.class)
 public class ArchiveTest extends BaseTest {
 
-    private ArchiveService<User, String> service;
+    private final ArchiveService<User, String> service;
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public ArchiveTest(UserService userService, JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.service = userService.archive();
+    }
 
     @BeforeEach
     void truncateTable () {
@@ -41,7 +43,6 @@ public class ArchiveTest extends BaseTest {
             jdbcTemplate.update("insert into `t_user_his` (`id`, `name`, `email`, `age`) values (?,?,?,?)",
                     "id"+i, "name"+i, "email"+i, i);
         }
-        this.service = userService.archive();
     }
 
     @Test
@@ -90,6 +91,7 @@ public class ArchiveTest extends BaseTest {
         Weekend<User> weekend = Weekend.of(User.class);
         weekend.weekendCriteria()
                 .andGreaterThan(User::getAge, 4);
+        @SuppressWarnings("unchecked")
         Page<User> page = service.select(weekend, 0, 2, Sort.Direction.DESC, User::getAge);
         Assertions.assertThat(page).hasSize(2)
                 .extracting(User::getAge)

@@ -29,6 +29,7 @@ public interface QueryService<T, ID> {
 
     Optional<T> selectOne (Sort sort);
 
+    @SuppressWarnings("unchecked")
     default Optional<T> selectOne(Sort.Direction order, Fn<T, Object>... properties) {
         return selectOne(SortUtils.formArray(order, properties));
     }
@@ -43,6 +44,7 @@ public interface QueryService<T, ID> {
 
     Optional<T> selectOne (T entity, Sort sort);
 
+    @SuppressWarnings("unchecked")
     default Optional<T> selectOne(T entity, Sort.Direction order, Fn<T, Object>... properties) {
         return selectOne(entity, SortUtils.formArray(order, properties));
     }
@@ -56,6 +58,7 @@ public interface QueryService<T, ID> {
 
     Optional<T> selectOne (Weekend<T> weekend, Sort sort);
 
+    @SuppressWarnings("unchecked")
     default Optional<T> selectOne(Weekend<T> weekend, Sort.Direction order, Fn<T, Object>... properties) {
         return selectOne(weekend, SortUtils.formArray(order, properties));
     }
@@ -68,6 +71,7 @@ public interface QueryService<T, ID> {
 
     List<T> select (Sort sort);
 
+    @SuppressWarnings("unchecked")
     default List<T> select (Sort.Direction direction, Fn<T, Object>... order) {
         return select(SortUtils.formArray(direction, order));
     }
@@ -82,6 +86,7 @@ public interface QueryService<T, ID> {
 
     List<T> select (T entity, Sort sort);
 
+    @SuppressWarnings("unchecked")
     default List<T> select (T entity, Sort.Direction direction, Fn<T, Object>... order) {
         return select(entity, SortUtils.formArray(direction, order));
     }
@@ -96,6 +101,7 @@ public interface QueryService<T, ID> {
 
     List<T> select (Weekend<T> weekend, Sort sort);
 
+    @SuppressWarnings("unchecked")
     default List<T> select (Weekend<T> weekend, Sort.Direction direction, Fn<T, Object>... order) {
         return select(weekend, SortUtils.formArray(direction, order));
     }
@@ -110,6 +116,7 @@ public interface QueryService<T, ID> {
         return select(entity, PageRequest.of(pageNum, pageSize));
     }
 
+    @SuppressWarnings("unchecked")
     default Page<T> select(T entity, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
         return select(entity, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
@@ -123,6 +130,7 @@ public interface QueryService<T, ID> {
         return select(PageRequest.of(pageNum, pageSize));
     }
 
+    @SuppressWarnings("unchecked")
     default Page<T> select(int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
         return select(PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
@@ -133,6 +141,8 @@ public interface QueryService<T, ID> {
 
     Page<T> select (Weekend<T> weekend, Pageable pageable);
 
+
+    @SuppressWarnings("unchecked")
     default Page<T> select(Weekend<T> weekend, int pageNum, int pageSize, Sort.Direction order, Fn<T, Object>... properties) {
         return select(weekend, PageRequest.of(pageNum, pageSize).withSort(SortUtils.formArray(order, properties)));
     }
@@ -146,6 +156,8 @@ public interface QueryService<T, ID> {
     }
     List<T> selectByLimit (Weekend<T> weekend, int limit, Sort sort);
 
+
+    @SuppressWarnings("unchecked")
     default List<T> selectByLimit(Weekend<T> weekend, int limit, Sort.Direction order, Fn<T, Object>... properties) {
         return selectByLimit(weekend, limit, SortUtils.formArray(order, properties));
     }
@@ -160,6 +172,8 @@ public interface QueryService<T, ID> {
 
     List<T> selectByLimit (T entity, int limit, Sort sort);
 
+
+    @SuppressWarnings("unchecked")
     default List<T> selectByLimit(T entity, int limit, Sort.Direction order, Fn<T, Object>... properties) {
         return selectByLimit(entity, limit, SortUtils.formArray(order, properties));
     }
@@ -174,6 +188,8 @@ public interface QueryService<T, ID> {
 
     List<T> selectByLimit (int limit, Sort sort);
 
+
+    @SuppressWarnings("unchecked")
     default List<T> selectByLimit(int limit, Sort.Direction order, Fn<T, Object>... properties) {
         return selectByLimit(limit, SortUtils.formArray(order, properties));
     }

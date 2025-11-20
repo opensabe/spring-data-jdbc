@@ -6,6 +6,7 @@ import io.github.opensabe.jdbc.converter.DefaultValueConversionContext;
 import io.github.opensabe.jdbc.converter.InternalPropertyValueConverter;
 import io.github.opensabe.jdbc.converter.JacksonParameterizedTypeTypeReference;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 
 /**
  * 处理数据库中的json字段
@@ -20,8 +21,8 @@ public class JsonPropertyValueConverter implements InternalPropertyValueConverte
     }
 
     @Override
-    public Object read(String value, DefaultValueConversionContext context) {
-        TypeInformation typeInformation = context.getProperty().getTypeInformation();
+    public Object read(@NonNull String value, DefaultValueConversionContext context) {
+        TypeInformation<?> typeInformation = context.getProperty().getTypeInformation();
         try {
             return objectMapper.readValue(value, JacksonParameterizedTypeTypeReference.fromTypeInformation(typeInformation));
         } catch (JsonProcessingException e) {
@@ -30,7 +31,7 @@ public class JsonPropertyValueConverter implements InternalPropertyValueConverte
     }
 
     @Override
-    public String write(Object value, DefaultValueConversionContext context) {
+    public String write(@NonNull Object value, @NonNull DefaultValueConversionContext context) {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException e) {

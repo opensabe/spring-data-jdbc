@@ -47,11 +47,9 @@ public class ExtendSQLGeneratorSource {
         this.context = context;
         this.converter = converter;
         this.exsitsExpression = dialect.getExistsFunction();
-        this.queryMapper = new QueryMapper(dialect, converter);
+        this.queryMapper = new QueryMapper(converter);
         this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
         this.identifierProcessing = dialect.getIdentifierProcessing();
-//        this.propertyAccessorCustomizer = propertyAccessorCustomizers.stream()
-//                .reduce(PropertyAccessorCustomizer::then).orElse(p -> p);
     }
 
     @SuppressWarnings("unchecked")
@@ -165,8 +163,8 @@ public class ExtendSQLGeneratorSource {
         }
 
 
-        @SuppressWarnings("unchecked")
         public PersistentPropertyAccessor<T> persistentPropertyAccessor (T instance) {
+//            return (PersistentPropertyAccessor<T>) propertyAccessorCustomizer.apply(entity.getPropertyAccessor(instance));
             return converter.getPropertyAccessor(entity, instance);
         }
 
@@ -174,7 +172,6 @@ public class ExtendSQLGeneratorSource {
             return rowMapper;
         }
 
-        @SuppressWarnings("unchecked")
         Triple<String, Object[], PersistentPropertyAccessor<T>> insertSelective (T instance) {
             StringBuilder sql = new StringBuilder("insert into ");
             sql.append(table.getName().toSql(identifierProcessing));
@@ -197,7 +194,6 @@ public class ExtendSQLGeneratorSource {
             return Triple.of(sql.toString(), args.toArray(), accessor);
         }
 
-        @SuppressWarnings("unchecked")
         Triple<String, Object[], Map<T, PersistentPropertyAccessor<T>>> insertList (Collection<T> instances) {
             int size = instances.size();
             Map<T, PersistentPropertyAccessor<T>> accessors = new IdentityHashMap<>(size);
@@ -238,8 +234,8 @@ public class ExtendSQLGeneratorSource {
                     set.add(Assignments.value(table.column(property.getColumnName()), SQL.bindMarker(":"+name)));
                 }
             }
-            Update update = assign.set(set).where(table.column(id.getColumnName()).isEqualTo(SQL.bindMarker(":" + id.getColumnName().getReference(identifierProcessing)))).build();
-            parameterSource.addValue(id.getColumnName().getReference(identifierProcessing), accessor.getProperty(id));
+            Update update = assign.set(set).where(table.column(id.getColumnName()).isEqualTo(SQL.bindMarker(":" + id.getColumnName().toSql(identifierProcessing)))).build();
+            parameterSource.addValue(id.getColumnName().toSql(identifierProcessing), accessor.getProperty(id));
             return Pair.of(sqlRenderer.render(update), parameterSource);
         }
 
@@ -294,7 +290,7 @@ public class ExtendSQLGeneratorSource {
             SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(t, query, parameterSource, from);
             selectOrdered = applyPagination(pageable, selectOrdered)
                     .orderBy(pageable.getSort().stream().map(o -> OrderByField
-                            .from(Expressions.just(entity.getRequiredPersistentProperty(o.getProperty()).getColumnName().getReference(identifierProcessing)), o.getDirection())
+                            .from(Expressions.just(entity.getRequiredPersistentProperty(o.getProperty()).getColumnName().toSql(identifierProcessing)), o.getDirection())
                             .withNullHandling(o.getNullHandling())
                     )
                     .toList());

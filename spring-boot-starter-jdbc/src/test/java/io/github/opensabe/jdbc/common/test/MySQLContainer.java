@@ -4,7 +4,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.testcontainers.containers.Container;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -14,9 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class MySQLContainer extends FixedHostPortGenericContainer<MySQLContainer> {
-    public static final int MYSQL_PORT = 3306;
-    public static final String MYSQL_ROOT_PASSWORD = "123456";
+public class MySQLContainer extends GenericContainer<MySQLContainer> {
 
     public MySQLContainer() {
         super("mysql");
@@ -24,7 +22,12 @@ public class MySQLContainer extends FixedHostPortGenericContainer<MySQLContainer
 
     protected void configure() {
         this.withEnv("MYSQL_ROOT_PASSWORD", "123456");
-        this.withExposedPorts(new Integer[]{3306});
+        this.withExposedPorts(3306);
+    }
+
+    public MySQLContainer withFixedExposedPort(int hostPort, int containerPort) {
+        super.addFixedExposedPort(hostPort, containerPort);
+        return this;
     }
 
     protected void containerIsStarted(InspectContainerResponse containerInfo) {
@@ -41,47 +44,45 @@ public class MySQLContainer extends FixedHostPortGenericContainer<MySQLContainer
     }
 
     private void executeSql(Resource[] resources) {
-        try {
-            if (resources != null && resources.length != 0) {
-                ExecutorService executorService = Executors.newFixedThreadPool(resources.length);
-                List<Future> futures = new ArrayList();
 
-                for(Resource resource : resources) {
-                    futures.add(executorService.submit(() -> {
-                        try {
-                            String content = resource.getContentAsString(Charset.defaultCharset());
-                            Container.ExecResult mysql = null;
-                            content = content.replace("\r\n", "\n");
+        if (resources != null && resources.length != 0) {
+            ExecutorService executorService = Executors.newFixedThreadPool(resources.length);
+            List<Future<?>> futures = new ArrayList<>();
 
-                            while(mysql == null || mysql.getExitCode() == 1 && (mysql.getStderr().contains("connect to") || mysql.getStderr().contains("Access denied"))) {
-                                mysql = this.execInContainer(new String[]{"mysql", "-uroot", "-p123456", "-e", content});
-                                System.out.println("-----------------------------------------------------------------------------------------\nMySQL command: " + resource + "\nMySQL init result: " + mysql.getStdout() + "\nMySQL init error: " + mysql.getStderr() + "\nMySQL init exit code: " + mysql.getExitCode());
-                                TimeUnit.SECONDS.sleep(3L);
-                            }
-
-                            if (mysql.getExitCode() != 0) {
-                                throw new RuntimeException("MySQL init failed at " + resource);
-                            }
-                        } catch (RuntimeException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }));
-                }
-
-                futures.forEach((future) -> {
+            for(Resource resource : resources) {
+                futures.add(executorService.submit(() -> {
                     try {
-                        future.get();
+                        String content = resource.getContentAsString(Charset.defaultCharset());
+                        Container.ExecResult mysql = null;
+                        content = content.replace("\r\n", "\n");
+
+                        while(mysql == null || mysql.getExitCode() == 1 && (mysql.getStderr().contains("connect to") || mysql.getStderr().contains("Access denied"))) {
+                            mysql = this.execInContainer("mysql", "-uroot", "-p123456", "-e", content);
+                            System.out.println("-----------------------------------------------------------------------------------------\nMySQL command: " + resource + "\nMySQL init result: " + mysql.getStdout() + "\nMySQL init error: " + mysql.getStderr() + "\nMySQL init exit code: " + mysql.getExitCode());
+                            TimeUnit.SECONDS.sleep(3L);
+                        }
+
+                        if (mysql.getExitCode() != 0) {
+                            throw new RuntimeException("MySQL init failed at " + resource);
+                        }
+                    } catch (RuntimeException e) {
+                        throw e;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                });
-                executorService.shutdownNow();
+                }));
             }
-        } catch (Throwable $ex) {
-            throw $ex;
+
+            futures.forEach((future) -> {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            executorService.shutdownNow();
         }
+
     }
 
     public void stop() {

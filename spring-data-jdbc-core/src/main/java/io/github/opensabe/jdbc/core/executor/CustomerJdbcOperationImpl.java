@@ -56,7 +56,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
             RelationalPersistentProperty id = generator.getId();
             String[] keyNames = null;
             if (idGeneration.driverRequiresKeyColumnNames()) {
-                 keyNames = new String[]{id.getColumnName().getReference(identifierProcessing)};
+                 keyNames = new String[]{id.getColumnName().toSql(identifierProcessing)};
             }
             i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), keyNames), keyHolder);
             try {
@@ -88,7 +88,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
         if (IdValueSource.GENERATED.equals(generator.getIdValueSource())) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             RelationalPersistentProperty id = generator.getId();
-            String reference = id.getColumnName().getReference(identifierProcessing);
+            String reference = id.getColumnName().toSql(identifierProcessing);
             Map<T, PersistentPropertyAccessor<T>> accessors = triple.third();
             if (idGeneration.driverRequiresKeyColumnNames()) {
                 i = namedParameterJdbcTemplate.getJdbcTemplate().update(new ArgumentPreparedStatementCreator(triple.first(), triple.second(), new String[]{reference}), keyHolder);
@@ -138,9 +138,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
     @Override
     public <T> List<T> findAll(Query query, Class<T> entityClass) {
-        List<T> list =new ArrayList<>();
-        jdbcAggregateTemplate.findAll(query, entityClass).forEach(list::add);
-        return list;
+        return new ArrayList<>(jdbcAggregateTemplate.findAll(query, entityClass));
     }
 
     @Override

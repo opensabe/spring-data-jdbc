@@ -24,6 +24,8 @@ public interface IService<T, ID> extends QueryService<T, ID> {
     int deleteById (ID id);
 
     int deleteAllById (Iterable<ID> ids);
+
+    @SuppressWarnings("unchecked")
     int deleteAllById (ID ... ids);
 
     long deleteAll (T entity);
