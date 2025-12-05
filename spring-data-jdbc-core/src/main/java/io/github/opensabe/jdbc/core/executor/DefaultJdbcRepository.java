@@ -1,9 +1,11 @@
 package io.github.opensabe.jdbc.core.executor;
 
-import io.github.opensabe.jdbc.core.ApplicationContextHolder;
 import io.github.opensabe.jdbc.core.lambda.Weekend;
 import io.github.opensabe.jdbc.core.repository.BaseRepository;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -19,7 +21,7 @@ import java.util.Optional;
 /**
  * @author heng.mai
  */
-public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
+public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID>, BeanFactoryAware {
 
     private final Lazy<CustomerJdbcOperation> criteriaJdbcOperation;
     private final Lazy<RelationalExampleMapper> exampleMapper;
@@ -30,11 +32,18 @@ public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID> {
 
     private final boolean unionkey;
 
+    private BeanFactory beanFactory;
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
+    }
+
     public DefaultJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity, JdbcConverter converter) {
         this.operations = entityOperations;
         this.clazz = entity.getType();
-        this.exampleMapper = Lazy.of(() -> ApplicationContextHolder.getBean(RelationalExampleMapper.class));
-        this.criteriaJdbcOperation = Lazy.of(() -> ApplicationContextHolder.getBean(CustomerJdbcOperation.class));
+        this.exampleMapper = Lazy.of(() -> beanFactory.getBean(RelationalExampleMapper.class));
+        this.criteriaJdbcOperation = Lazy.of(() -> beanFactory.getBean(CustomerJdbcOperation.class));
         this.unionkey = !entity.hasIdProperty() || entity.getRequiredIdProperty().getType().isAssignableFrom(clazz);
     }
 

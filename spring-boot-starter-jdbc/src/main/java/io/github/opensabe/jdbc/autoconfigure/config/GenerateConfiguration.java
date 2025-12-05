@@ -1,6 +1,5 @@
 package io.github.opensabe.jdbc.autoconfigure.config;
 
-import io.github.opensabe.jdbc.core.ApplicationContextHolder;
 import io.github.opensabe.jdbc.core.converter.IntegerToBooleanConverter;
 import io.github.opensabe.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.opensabe.jdbc.core.executor.CustomerJdbcOperationImpl;
@@ -9,7 +8,6 @@ import io.github.opensabe.jdbc.core.executor.PropertyAccessorCustomizer;
 import io.github.opensabe.jdbc.core.jackson.PageSerializeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -48,12 +46,6 @@ public class GenerateConfiguration {
         return accessor -> new ConvertingPropertyAccessor<>(accessor, conversionService);
     }
 
-
-    @Bean
-    public ApplicationContextHolder applicationHolder (ApplicationContext applicationContext) {
-        return new ApplicationContextHolder(applicationContext);
-    }
-
     @Bean
     @ConditionalOnMissingBean
     public RelationalExampleMapper relationalExampleMapper (RelationalMappingContext context) {
@@ -87,6 +79,7 @@ public class GenerateConfiguration {
     public Consumer<GenericConversionService> extensionsConverterConsumer (ObjectProvider<Converter<?,?>> converters) {
         return conversionService -> converters.forEach(conversionService::addConverter);
     }
+
 
     @Bean
     @ConditionalOnMissingBean

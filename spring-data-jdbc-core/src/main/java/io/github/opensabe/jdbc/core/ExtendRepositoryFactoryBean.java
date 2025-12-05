@@ -1,7 +1,9 @@
 package io.github.opensabe.jdbc.core;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -14,6 +16,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
+import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -123,6 +126,16 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
                         }
                 );
             }
+
+            @Override
+            protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
+                Object object = super.getTargetRepository(repositoryInformation);
+                if (object instanceof BeanFactoryAware beanFactoryAware) {
+                    beanFactoryAware.setBeanFactory(beanFactory);
+                    return beanFactoryAware;
+                }
+                return object;
+            };
         };
         jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
         jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
