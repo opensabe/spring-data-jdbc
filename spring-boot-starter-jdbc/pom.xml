@@ -12,6 +12,7 @@
 
     <groupId>io.github.opensabe-tech</groupId>
     <artifactId>spring-boot-starter-jdbc</artifactId>
+    <name>${project.artifactId}</name>
 
     <packaging>jar</packaging>
 
