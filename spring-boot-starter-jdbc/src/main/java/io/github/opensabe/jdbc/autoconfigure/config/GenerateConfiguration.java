@@ -34,11 +34,6 @@ import java.util.function.Consumer;
 public class GenerateConfiguration {
 
 
-    @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    public PropertyAccessorCustomizer convertingPropertyAccessorCustomizer (ConversionService conversionService) {
-        return accessor -> new ConvertingPropertyAccessor<>(accessor, conversionService);
-    }
 
     @Bean
     @ConditionalOnMissingBean
