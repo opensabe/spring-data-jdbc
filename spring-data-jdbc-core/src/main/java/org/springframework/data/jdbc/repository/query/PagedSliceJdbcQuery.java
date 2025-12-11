@@ -119,8 +119,8 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
         JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor);
         MapSqlParameterSource parameterMap = this.bindParameters(accessor);
-        queryExecution = wrapPageableQueryExecution(accessor, parameterMap, queryExecution);
         String query = evaluateExpressions(objects, accessor.getBindableParameters(), parameterMap);
+        queryExecution = wrapPageableQueryExecution(query, accessor.getPageable(), parameterMap, queryExecution);
         return queryExecution.execute(enhancePageQuery(query), parameterMap);
     }
 
@@ -133,9 +133,16 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
                                        MapSqlParameterSource parameterMap) {
 
         if (parsedQuery.hasParameterBindings()) {
+            Object[] params = new Object[bindableParameters.getNumberOfParameters()];
+            for (Parameter parameter : bindableParameters) {
+                Object object = objects[parameter.getIndex()];
+                if (!(object instanceof Pageable)) {
+                    params[parameter.getIndex()] = object;
+                }
 
+            }
             ValueEvaluationContext evaluationContext = delegate.createValueContextProvider(bindableParameters)
-                    .getEvaluationContext(objects);
+                    .getEvaluationContext(params);
 
             parsedQuery.getParameterMap().forEach((paramName, valueExpression) -> {
                 parameterMap.addValue(paramName, valueExpression.evaluate(evaluationContext));
@@ -284,8 +291,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     }
 
     @SuppressWarnings("unchecked")
-    private JdbcQueryExecution<?> wrapPageableQueryExecution(RelationalParameterAccessor accessor, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
-        Pageable pageable = accessor.getPageable();
+    private JdbcQueryExecution<?> wrapPageableQueryExecution(String resolvedSQL, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
         parameterMap.addValue("offset", pageable.getOffset());
         if (queryMethod.isSliceQuery()) {
             parameterMap.addValue("limit", pageable.getPageSize() + 1);
@@ -294,8 +300,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
             parameterMap.addValue("limit", pageable.getPageSize());
             queryExecution =  new PartTreeJdbcQuery.PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, pageable,
                     () -> {
-                        String querySql = Objects.requireNonNull(getQueryMethod().getDeclaredQuery());
-                        String countQuerySql = querySql.replaceFirst("(?i)select .*? from", "select count(*) from")
+                        String countQuerySql = resolvedSQL.replaceFirst("(?i)select .*? from", "select count(*) from")
                                 .replaceFirst("(?i) order by .*", "");
                         Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuerySql, parameterMap);
                         return this.converter.getConversionService().convert(count, Long.class);

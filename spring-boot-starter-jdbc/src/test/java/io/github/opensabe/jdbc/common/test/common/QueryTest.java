@@ -80,6 +80,32 @@ public class QueryTest extends BaseTest {
                 .hasSize(1);
         Assertions.assertEquals(100, page.getTotalElements());
     }
+    @Test
+    void testPageByQueryMethodWithQuery () {
+        User user = new User();
+        user.setName("name1");
+        user.setAge(10);
+        Page<User> page = userRepository.selectPageByQuery(user, PageRequest.of(0, 1));
+        assertThat(page)
+                .hasSize(1);
+        Assertions.assertEquals(1, page.getTotalElements());
+    }
+    @Test
+    void testPageByQueryMethodWithParam () {
+        Page<User> page = userRepository.selectPageByParam("id2", 20, PageRequest.of(0, 1));
+        assertThat(page)
+                .hasSize(1);
+        Assertions.assertEquals(1, page.getTotalElements());
+    }
+    @Test
+    void testListByQueryQuery () {
+        User user = new User();
+        user.setName("name1");
+        user.setAge(10);
+        List<User> users = userRepository.selectByQuery(user);
+        assertThat(users)
+                .hasSize(1);
+    }
 
     @Test
     public void findById() {
