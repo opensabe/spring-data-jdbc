@@ -7,6 +7,7 @@ import io.github.opensabe.jdbc.core.executor.ExtendSQLGeneratorSource;
 import io.github.opensabe.jdbc.core.jackson.PageSerializeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -85,14 +86,12 @@ public class GenerateConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
     public PropertyValueConversionService propertyValueConversionService(@Lazy JdbcCustomConversions conversions) {
         return new PropertyValueConversionService(conversions);
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public PageSerializeModule pageSerializeModule () {
-        return new PageSerializeModule();
+    public JsonMapperBuilderCustomizer pageSerializeModuleCustomizer () {
+        return builder -> builder.addModule(new PageSerializeModule());
     }
 }

@@ -1,7 +1,5 @@
 package io.github.opensabe.jdbc.common.test.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.opensabe.jdbc.common.test.BaseTest;
 import io.github.opensabe.jdbc.common.test.common.repository.UserRepository;
 import io.github.opensabe.jdbc.common.test.common.service.UserService;
@@ -19,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -346,7 +345,7 @@ public class QueryTest extends BaseTest {
     }
 
     @Test
-    public void testFindPageEntityOrder() throws JsonProcessingException {
+    public void testFindPageEntityOrder() {
         Page<User> page = userService.select(new User(), 0, 10,Sort.Direction.ASC, User::getAge);
         System.out.println(objectMapper.writeValueAsString(page));
         Assertions.assertEquals(100, page.getTotalElements());

@@ -27,8 +27,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -42,7 +44,6 @@ import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -86,16 +87,16 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
      * @param rowMapperFactory must not be {@literal null}.
      * @since 2.3
      */
-    public PagedSliceJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-                               RowMapperFactory rowMapperFactory, JdbcConverter converter,
+    public PagedSliceJdbcQuery(JdbcQueryMethod queryMethod, JdbcAggregateOperations operations,
+                               RowMapperFactory rowMapperFactory,
                                ValueExpressionDelegate delegate) {
 
-        super(queryMethod, operations);
+        super(queryMethod, operations.getDataAccessStrategy().getJdbcOperations());
 
         Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
         this.queryMethod = queryMethod;
-        this.converter = converter;
+        this.converter = operations.getConverter();
         this.rowMapperFactory = rowMapperFactory;
 
         ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(delegate,
@@ -166,7 +167,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
             JdbcQueryExecution.ResultProcessingConverter _converter = new JdbcQueryExecution.ResultProcessingConverter(resultProcessor,
                     this.converter.getMappingContext(), this.converter.getEntityInstantiators());
-            return new ConvertingRowMapper<>(rowMapperToUse, _converter);
+            return new ConvertingRowMapper(rowMapperToUse, _converter);
         }
 
         return cachedRowMapperFactory.getRowMapper();

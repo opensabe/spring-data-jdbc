@@ -97,6 +97,7 @@ public class DynamicDataSourceConfiguration {
             String name = factoryBean.getConfigSource().getAttribute("name").orElse("default");
             factoryBean.setJdbcOperations(factory.getNamedParameterJdbcOperations(name));
             factoryBean.setDataAccessStrategy(factory.getDataAccessStrategy(name));
+            factoryBean.setJdbcAggregateOperations(factory.getJdbcAggregateOperations(name));
             factoryBean.setTransactionManager(name);
         };
     }

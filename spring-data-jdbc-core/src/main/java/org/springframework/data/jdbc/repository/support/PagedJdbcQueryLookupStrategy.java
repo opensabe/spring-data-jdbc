@@ -1,10 +1,13 @@
 package org.springframework.data.jdbc.repository.support;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.PagedSliceJdbcQuery;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
+import org.springframework.data.jdbc.repository.query.StringBasedJdbcQuery;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -23,13 +26,14 @@ import java.lang.reflect.Method;
 public class PagedJdbcQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
 
-    public PagedJdbcQueryLookupStrategy(ApplicationEventPublisher publisher, EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations, ValueExpressionDelegate delegate) {
-        super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
+    public PagedJdbcQueryLookupStrategy(JdbcAggregateOperations operations, RowMapperFactory rowMapperFactory,
+                                        ValueExpressionDelegate delegate) {
+        super(operations, rowMapperFactory, delegate);
     }
 
     @Override
     public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory, NamedQueries namedQueries) {
         JdbcQueryMethod queryMethod = getJdbcQueryMethod(method, metadata, factory, namedQueries);
-        return new PagedSliceJdbcQuery(queryMethod, getOperations(), this::createMapper, getConverter(), delegate);
+        return new PagedSliceJdbcQuery(queryMethod, operations, rowMapperFactory , delegate);
     }
 }

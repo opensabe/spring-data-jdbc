@@ -1,34 +1,31 @@
 package io.github.opensabe.jdbc.core;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
-import org.springframework.data.jdbc.repository.support.PagedJdbcQueryLookupStrategy;
-import org.springframework.data.mapping.callback.EntityCallbacks;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
+import org.springframework.data.jdbc.repository.support.*;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.core.support.RepositoryComposition;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.util.Assert;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -47,6 +44,16 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     private RepositoryFactorySupportSupplier repositoryFactorySupportSupplier;
 
     private RepositoryFactoryBeanCustomizer factoryBeanCustomizer;
+
+
+
+    private @Nullable ApplicationEventPublisher publisher;
+    private @Nullable BeanFactory beanFactory;
+    private @Nullable JdbcAggregateOperations aggregateOperations;
+    private @Nullable JdbcConverter converter;
+    private @Nullable DataAccessStrategy dataAccessStrategy;
+    private @Nullable QueryMappingConfiguration queryMappingConfiguration;
+
 
 
     public ExtendRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
@@ -95,6 +102,7 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
             }
         }
         super.setBeanFactory(beanFactory);
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -102,62 +110,50 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
         if (repositoryFactorySupportSupplier != null) {
             return repositoryFactorySupportSupplier.get(this);
         }
-        DataAccessStrategy dataAccessStrategy = getFiled(DataAccessStrategy.class, "dataAccessStrategy");
-        RelationalMappingContext mappingContext = getFiled(RelationalMappingContext.class, "mappingContext");
-        JdbcConverter converter = getFiled(JdbcConverter.class, "converter");
-        Dialect dialect = getFiled(Dialect.class, "dialect");
-        ApplicationEventPublisher publisher = getFiled(ApplicationEventPublisher.class, "publisher");
-        NamedParameterJdbcOperations operations = getFiled(NamedParameterJdbcOperations.class, "operations");
-        QueryMappingConfiguration queryMappingConfiguration = getFiled(QueryMappingConfiguration.class, "queryMappingConfiguration");
-        EntityCallbacks entityCallbacks = getFiled(EntityCallbacks.class, "entityCallbacks");
-        BeanFactory beanFactory = getFiled(BeanFactory.class, "beanFactory");
+        JdbcRepositoryFactory repositoryFactory;
+
+        if (this.aggregateOperations != null) {
+            repositoryFactory = new JdbcRepositoryFactoryWrapper(this.aggregateOperations, beanFactory, queryMappingConfiguration);
+        } else {
+
+            Assert.state(this.dataAccessStrategy != null, "DataAccessStrategy is required and must not be null");
+            Assert.state(this.converter != null, "RelationalConverter is required and must not be null");
+
+            JdbcAggregateOperations operations = new JdbcAggregateTemplate(converter, dataAccessStrategy);
+
+            repositoryFactory = new JdbcRepositoryFactoryWrapper(operations, beanFactory, queryMappingConfiguration);
+        }
+
+//        repositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
+//        repositoryFactory.setBeanFactory(beanFactory);
+        return repositoryFactory;
+    }
 
 
-
-        JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-                converter, dialect, publisher, operations) {
-
-            @Override
-            protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key, ValueExpressionDelegate valueExpressionDelegate) {
-                return super.getQueryLookupStrategy(key, valueExpressionDelegate).map(s ->
-                    (method, metadata, factory, namedQueries) ->{
-                    try {
-                        return s.resolveQuery(method, metadata, factory, namedQueries);
-                    }catch (UnsupportedOperationException e) {
-                        return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, new CachingValueExpressionDelegate(valueExpressionDelegate))
-                                .resolveQuery(method, metadata, factory, namedQueries);
-                    }
-                });
-            }
-
-            @Override
-            protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
-                Object object = super.getTargetRepository(repositoryInformation);
-                if (object instanceof BeanFactoryAware beanFactoryAware) {
-                    beanFactoryAware.setBeanFactory(beanFactory);
-                    return beanFactoryAware;
-                }
-                return object;
-            };
-        };
-        jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
-        jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
-        jdbcRepositoryFactory.setBeanFactory(beanFactory);
-
-        return jdbcRepositoryFactory;
+    @Override
+    public void setJdbcAggregateOperations(JdbcAggregateOperations jdbcAggregateOperations) {
+        super.setJdbcAggregateOperations(jdbcAggregateOperations);
+        this.aggregateOperations = jdbcAggregateOperations;
     }
 
 
 
-    @SuppressWarnings("unchecked")
-    private <E> E getFiled (Class<E> type, String name) {
-        Field field = ReflectionUtils.findField(this.getClass(), name, type);
-        try {
-            Objects.requireNonNull(field).setAccessible(true);
-            return (E)field.get(this);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public void setConverter(JdbcConverter converter) {
+        super.setConverter(converter);
+        this.converter = converter;
+    }
+
+    @Override
+    public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
+        super.setDataAccessStrategy(dataAccessStrategy);
+        this.dataAccessStrategy = dataAccessStrategy;
+    }
+
+    @Override
+    public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
+        super.setQueryMappingConfiguration(queryMappingConfiguration);
+        this.queryMappingConfiguration = queryMappingConfiguration;
     }
 
     @Override
@@ -169,6 +165,65 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
         if (repositoryFactoryCustomizers != null) {
             repositoryFactoryCustomizers.forEach(this::addRepositoryFactoryCustomizer);
         }
+
+        if (this.queryMappingConfiguration == null) {
+            if (this.beanFactory == null) {
+                setQueryMappingConfiguration(QueryMappingConfiguration.EMPTY);
+            } else {
+                setQueryMappingConfiguration(beanFactory.getBeanProvider(QueryMappingConfiguration.class)
+                        .getIfAvailable(() -> QueryMappingConfiguration.EMPTY));
+            }
+        }
+
         super.afterPropertiesSet();
+    }
+
+    public static class JdbcRepositoryFactoryWrapper extends JdbcRepositoryFactory {
+
+        private final JdbcAggregateOperations operations;
+        private final BeanFactory beanFactory;
+        private final QueryMappingConfiguration queryMappingConfiguration;
+        public JdbcRepositoryFactoryWrapper(JdbcAggregateOperations operations, BeanFactory beanFactory, QueryMappingConfiguration configuration) {
+            super(operations);
+            setBeanFactory(beanFactory);
+            setQueryMappingConfiguration(configuration);
+            this.operations = operations;
+            this.beanFactory = beanFactory;
+            this.queryMappingConfiguration = configuration;
+        }
+
+        @Override
+        protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
+            Object repository = super.getTargetRepository(repositoryInformation);
+            beanFactory.getBeanProvider(BeanPostProcessor.class).forEach(beanPostProcessor -> beanPostProcessor.postProcessAfterInitialization(repository, repositoryInformation.getRepositoryInterface().getName()));
+            if (repository instanceof BeanFactoryAware beanFactoryAware) {
+                beanFactoryAware.setBeanFactory(beanFactory);
+            }
+            return repository;
+        }
+
+        @Override
+        public <T> T getRepository(Class<T> repositoryInterface, RepositoryComposition.RepositoryFragments fragments) {
+            T repository = super.getRepository(repositoryInterface, fragments);
+            beanFactory.getBeanProvider(BeanPostProcessor.class).forEach(beanPostProcessor -> beanPostProcessor.postProcessAfterInitialization(repository, repositoryInterface.getName()));
+            return repository;
+        }
+
+        @Override
+        protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.@Nullable Key key, ValueExpressionDelegate valueExpressionDelegate) {
+            RowMapperFactory rowMapperFactory = beanFactory != null
+                    ? new BeanFactoryAwareRowMapperFactory(beanFactory, operations, queryMappingConfiguration)
+                    : new DefaultRowMapperFactory(operations, queryMappingConfiguration);
+            return super.getQueryLookupStrategy(key, valueExpressionDelegate).map(s ->
+                    (method, metadata, factory, namedQueries) -> {
+                        try {
+                            return s.resolveQuery(method, metadata, factory, namedQueries);
+                        }catch (UnsupportedOperationException e) {
+                            return new PagedJdbcQueryLookupStrategy(operations, rowMapperFactory, new CachingValueExpressionDelegate(valueExpressionDelegate))
+                                    .resolveQuery(method, metadata, factory, namedQueries);
+                        }
+                    });
+        }
+
     }
 }

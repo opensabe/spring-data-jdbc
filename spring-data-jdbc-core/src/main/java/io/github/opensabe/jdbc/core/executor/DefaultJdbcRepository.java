@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author heng.mai
+ * @author heng.ma
  */
 public class DefaultJdbcRepository<T, ID>  implements BaseRepository<T, ID>, BeanFactoryAware {
 

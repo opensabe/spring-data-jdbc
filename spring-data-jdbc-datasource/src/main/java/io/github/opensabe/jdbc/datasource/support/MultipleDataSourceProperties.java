@@ -1,8 +1,8 @@
 package io.github.opensabe.jdbc.datasource.support;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 
 import java.util.List;
 import java.util.Map;

@@ -1,12 +1,13 @@
 package io.github.opensabe.jdbc.core.jackson;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.springframework.data.domain.Page;
 
-import java.io.IOException;
+import org.springframework.data.domain.Page;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.StdSerializer;
+
 import java.util.Objects;
 
 /**
@@ -16,16 +17,19 @@ import java.util.Objects;
 public class PageSerializeModule extends SimpleModule {
 
     public PageSerializeModule() {
-        addSerializer(Page.class, new JsonSerializer<>() {
+        addSerializer(new StdSerializer<Page>(Page.class) {
+
             @Override
-            public void serialize(Page value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            public void serialize(Page value, JsonGenerator gen, SerializationContext provider) throws JacksonException {
                 if (Objects.isNull(value)) {
                     gen.writeNull();
                     return;
                 }
                 gen.writeStartObject();
-                gen.writeNumberField("total", value.getTotalElements());
-                gen.writeObjectField("list", value.getContent());
+                gen.writeNumberProperty("total", value.getTotalElements());
+                gen.writeArrayPropertyStart("list");
+                value.getContent().forEach(item -> provider.writeValue(gen, item));
+                gen.writeEndArray();
                 gen.writeEndObject();
             }
         });

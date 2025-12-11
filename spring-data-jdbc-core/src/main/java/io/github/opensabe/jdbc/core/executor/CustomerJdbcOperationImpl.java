@@ -4,6 +4,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -26,7 +27,7 @@ import java.util.*;
  */
 public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
-    private final JdbcAggregateTemplate jdbcAggregateTemplate;
+    private final JdbcAggregateOperations jdbcAggregateTemplate;
 
     private final ExtendSQLGeneratorSource extendSQLGeneratorSource;
 
@@ -36,7 +37,7 @@ public class CustomerJdbcOperationImpl implements CustomerJdbcOperation {
 
     private final IdentifierProcessing identifierProcessing;
 
-    public CustomerJdbcOperationImpl(JdbcAggregateTemplate jdbcAggregateTemplate, ExtendSQLGeneratorSource extendSQLGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
+    public CustomerJdbcOperationImpl(JdbcAggregateOperations jdbcAggregateTemplate, ExtendSQLGeneratorSource extendSQLGeneratorSource, NamedParameterJdbcTemplate namedParameterJdbcTemplate, Dialect dialect) {
         this.jdbcAggregateTemplate = jdbcAggregateTemplate;
         this.extendSQLGeneratorSource = extendSQLGeneratorSource;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;

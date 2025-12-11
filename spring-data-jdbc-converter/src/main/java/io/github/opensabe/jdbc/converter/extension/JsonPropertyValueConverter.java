@@ -1,12 +1,11 @@
 package io.github.opensabe.jdbc.converter.extension;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.opensabe.jdbc.converter.DefaultValueConversionContext;
 import io.github.opensabe.jdbc.converter.InternalPropertyValueConverter;
 import io.github.opensabe.jdbc.converter.JacksonParameterizedTypeTypeReference;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.lang.NonNull;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 处理数据库中的json字段
@@ -14,28 +13,21 @@ import org.springframework.lang.NonNull;
  */
 public class JsonPropertyValueConverter implements InternalPropertyValueConverter<Object, String> {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public JsonPropertyValueConverter(ObjectMapper objectMapper) {
+    public JsonPropertyValueConverter(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
     @Override
     public Object read(@NonNull String value, DefaultValueConversionContext context) {
         TypeInformation<?> typeInformation = context.getProperty().getTypeInformation();
-        try {
-            return objectMapper.readValue(value, JacksonParameterizedTypeTypeReference.fromTypeInformation(typeInformation));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return objectMapper.readerFor(JacksonParameterizedTypeTypeReference.fromTypeInformation(typeInformation)).readValue(value);
+
     }
 
     @Override
     public String write(@NonNull Object value, @NonNull DefaultValueConversionContext context) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return objectMapper.writeValueAsString(value);
     }
 }

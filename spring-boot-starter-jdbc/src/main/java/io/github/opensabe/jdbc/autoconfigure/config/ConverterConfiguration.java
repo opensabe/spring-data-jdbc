@@ -1,6 +1,5 @@
 package io.github.opensabe.jdbc.autoconfigure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.opensabe.jdbc.converter.InternalConversions;
 import io.github.opensabe.jdbc.converter.InternalJdbcConverter;
 import io.github.opensabe.jdbc.converter.SpecifyPropertyConverterFactory;
@@ -18,12 +17,12 @@ import org.springframework.data.convert.PropertyValueConversions;
 import org.springframework.data.convert.PropertyValueConverterFactory;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -37,7 +36,7 @@ public class ConverterConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @SuppressWarnings("unused")
-    public JsonPropertyValueConverter jsonPropertyValueConverter(ObjectMapper objectMapper) {
+    public JsonPropertyValueConverter jsonPropertyValueConverter(JsonMapper objectMapper) {
         return new JsonPropertyValueConverter(objectMapper);
     }
 
@@ -86,7 +85,7 @@ public class ConverterConfiguration {
         @Bean
         @ConditionalOnMissingBean
         @Override
-        public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+        public JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
             return super.jdbcDialect(operations);
         }
 
@@ -94,7 +93,7 @@ public class ConverterConfiguration {
         @ConditionalOnMissingBean
         @Override
         public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations,
-                                                         JdbcConverter jdbcConverter, JdbcMappingContext context, Dialect dialect) {
+                                                         JdbcConverter jdbcConverter, JdbcMappingContext context, JdbcDialect dialect) {
             return super.dataAccessStrategyBean(operations, jdbcConverter, context, dialect);
         }
 
@@ -113,11 +112,8 @@ public class ConverterConfiguration {
         public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext,
                                            NamedParameterJdbcOperations operations,
                                            @Lazy RelationResolver relationResolver,
-                                           JdbcCustomConversions conversions, Dialect dialect) {
-            org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect jd
-                    ? jd.getArraySupport()
-                    : JdbcArrayColumns.DefaultSupport.INSTANCE;
-            DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
+                                           JdbcCustomConversions conversions, JdbcDialect dialect) {
+            DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), dialect.getArraySupport());
             return new InternalJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, converters, propertyValueConversionService);
         }
     }

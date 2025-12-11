@@ -3,10 +3,10 @@ package io.github.opensabe.jdbc.core;
 import io.github.opensabe.jdbc.core.lambda.Weekend;
 import io.github.opensabe.jdbc.core.repository.BaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.*;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 
 import java.util.List;
 import java.util.Optional;

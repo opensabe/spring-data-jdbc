@@ -5,21 +5,24 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
+import org.springframework.boot.transaction.autoconfigure.TransactionManagerCustomizers;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
-import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.support.JdbcTransactionManager;
-import org.springframework.lang.Nullable;
 import org.springframework.transaction.TransactionManager;
 import org.springframework.util.StringUtils;
 
@@ -55,7 +58,6 @@ public class DefaultDataSourceConfiguration {
         return createDataSource(defaultProperties);
     }
 
-    @Nullable
     private DataSource readOnlyDataSource (MultipleDataSourceProperties properties) {
         MultipleDataSourceProperties.Properties readOnly = properties.readOnlyProperties(name);
         if (readOnly != null) {
@@ -107,13 +109,17 @@ public class DefaultDataSourceConfiguration {
 
     @Bean
     @Lazy
-    public DataAccessStrategy dataAccessStrategy (RelationalMappingContext context,
-                                                  JdbcConverter jdbcConverter,
+    public DataAccessStrategy namedDataAccessStrategy (JdbcConverter jdbcConverter,
                                                   @Qualifier("namedParameterJdbcOperations") NamedParameterJdbcOperations operations,
-                                                  Dialect dialect) {
-        return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
-                jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter),
-                new InsertStrategyFactory(operations, dialect));
+                                                  JdbcDialect dialect, ObjectProvider<QueryMappingConfiguration> configuration) {
+        return JdbcConfiguration.createDataAccessStrategy(operations, jdbcConverter, configuration.getIfAvailable(), dialect);
+    }
+
+
+    @Bean
+    @Lazy
+    public JdbcAggregateOperations jdbcAggregateOperations (JdbcConverter jdbcConverter, @Qualifier("namedDataAccessStrategy") DataAccessStrategy dataAccessStrategy) {
+        return new JdbcAggregateTemplate(jdbcConverter, dataAccessStrategy);
     }
 
     @Bean

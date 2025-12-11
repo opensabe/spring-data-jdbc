@@ -1,8 +1,8 @@
 package io.github.opensabe.jdbc.converter;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.lang.NonNull;
+import tools.jackson.core.type.TypeReference;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -39,7 +39,7 @@ public class JacksonParameterizedTypeTypeReference<T> extends TypeReference<T> {
 
             @Override
             public Type getOwnerType() {
-                return null;
+                return type.getOwnerType();
             }
         };
     }

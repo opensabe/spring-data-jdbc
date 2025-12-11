@@ -2,6 +2,7 @@ package io.github.opensabe.jdbc.datasource.support;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.context.named.NamedContextFactory;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.transaction.TransactionManager;
@@ -46,6 +47,9 @@ public class JdbcNamedContextFactory extends NamedContextFactory<JdbcNamedContex
         return getProvider(name, TransactionManager.class);
     }
 
+    public JdbcAggregateOperations getJdbcAggregateOperations (String name) {
+        return getInstance(name, JdbcAggregateOperations.class);
+    }
 
 
 
