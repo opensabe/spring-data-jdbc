@@ -118,16 +118,16 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
             throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
         }
 
+        String sql = processSpelExpressions(objects, parameterMap, query);
         if (queryMethod.isSliceQuery() || queryMethod.isPageQuery()) {
-            queryExecution = wrapPageableQueryExecution(accessor, parameterMap, queryExecution);
+            queryExecution = wrapPageableQueryExecution(sql, accessor.getPageable(), parameterMap, queryExecution);
         }
 
-        return queryExecution.execute(processSpelExpressions(objects, parameterMap, query), parameterMap);
+        return queryExecution.execute(sql, parameterMap);
     }
 
     @SuppressWarnings("unchecked")
-    private JdbcQueryExecution<?> wrapPageableQueryExecution(RelationalParameterAccessor accessor, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
-        Pageable pageable = accessor.getPageable();
+    private JdbcQueryExecution<?> wrapPageableQueryExecution(String sql, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
         parameterMap.addValue("offset", pageable.getOffset());
         if (queryMethod.isSliceQuery()) {
             parameterMap.addValue("limit", pageable.getPageSize() + 1);
@@ -136,8 +136,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
             parameterMap.addValue("limit", pageable.getPageSize());
             queryExecution =  new PartTreeJdbcQuery.PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, pageable,
                     () -> {
-                        String querySql = Objects.requireNonNull(getQueryMethod().getDeclaredQuery());
-                        String countQuerySql = querySql.replaceFirst("(?i)select .*? from", "select count(*) from")
+                        String countQuerySql = sql.replaceFirst("(?i)select .*? from", "select count(*) from")
                                 .replaceFirst("(?i) order by .*", "");
                         Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuerySql, parameterMap);
                         return this.converter.getConversionService().convert(count, Long.class);
@@ -147,6 +146,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     }
 
     private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
+
 
         SpelQueryContext.EvaluatingSpelQueryContext queryContext = SpelQueryContext
                 .of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
