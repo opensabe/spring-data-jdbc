@@ -211,19 +211,21 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
 
         @Override
         protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.@Nullable Key key, ValueExpressionDelegate valueExpressionDelegate) {
-            RowMapperFactory rowMapperFactory = beanFactory != null
-                    ? new BeanFactoryAwareRowMapperFactory(beanFactory, operations, queryMappingConfiguration)
-                    : new DefaultRowMapperFactory(operations, queryMappingConfiguration);
             return super.getQueryLookupStrategy(key, valueExpressionDelegate).map(s ->
                     (method, metadata, factory, namedQueries) -> {
                         try {
                             return s.resolveQuery(method, metadata, factory, namedQueries);
                         }catch (UnsupportedOperationException e) {
+                            RowMapperFactory rowMapperFactory = beanFactory != null
+                                    ? new BeanFactoryAwareRowMapperFactory(beanFactory, operations, queryMappingConfiguration)
+                                    : new DefaultRowMapperFactory(operations, queryMappingConfiguration);
                             return new PagedJdbcQueryLookupStrategy(operations, rowMapperFactory, new CachingValueExpressionDelegate(valueExpressionDelegate))
                                     .resolveQuery(method, metadata, factory, namedQueries);
                         }
                     });
         }
+
+
 
     }
 }
