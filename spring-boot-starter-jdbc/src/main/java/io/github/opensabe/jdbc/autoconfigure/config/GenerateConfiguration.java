@@ -1,11 +1,13 @@
 package io.github.opensabe.jdbc.autoconfigure.config;
 
+import io.github.opensabe.jdbc.core.BeanRowMapperFactory;
 import io.github.opensabe.jdbc.core.converter.IntegerToBooleanConverter;
 import io.github.opensabe.jdbc.core.executor.CustomerJdbcOperation;
 import io.github.opensabe.jdbc.core.executor.CustomerJdbcOperationImpl;
 import io.github.opensabe.jdbc.core.executor.ExtendSQLGeneratorSource;
 import io.github.opensabe.jdbc.core.jackson.PageSerializeModule;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,7 @@ import org.springframework.data.convert.*;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
@@ -88,6 +91,17 @@ public class GenerateConfiguration {
     @ConditionalOnMissingBean
     public PropertyValueConversionService propertyValueConversionService(@Lazy JdbcCustomConversions conversions) {
         return new PropertyValueConversionService(conversions);
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean
+    public BeanRowMapperFactory rowMapperFactory (@Autowired(required = false) QueryMappingConfiguration  queryMappingConfiguration,
+                                                  RelationalMappingContext relationalMappingContext,
+                                                  ConversionService conversionService
+
+                                                  ) {
+        return new BeanRowMapperFactory(queryMappingConfiguration, relationalMappingContext, conversionService);
     }
 
     @Bean

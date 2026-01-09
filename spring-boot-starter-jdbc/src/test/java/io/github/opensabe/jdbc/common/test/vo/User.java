@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 /**
  * @author heng.ma
  */
-
 @Table(name = "t_user")
 public class User {
 
@@ -85,4 +84,5 @@ public class User {
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
     }
+
 }
