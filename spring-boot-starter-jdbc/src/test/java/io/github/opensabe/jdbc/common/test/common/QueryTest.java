@@ -535,4 +535,13 @@ public class QueryTest extends BaseTest {
         users = userRepository.selectByDynamic(user);
         Assertions.assertEquals(100, users.size());
     }
+    @Test
+    void testDynamicParamIn () {
+        List<User> users = userRepository.selectByDynamicIn(List.of("id1", "id2"));
+        Assertions.assertEquals(2, users.size());
+        users = userRepository.selectByDynamicIn(null);
+        Assertions.assertEquals(100, users.size());
+        users = userRepository.selectByDynamicIn(List.of());
+        Assertions.assertEquals(100, users.size());
+    }
 }
