@@ -109,14 +109,17 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
 
     @Override
     public Object execute(Object[] objects) {
-        RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(), objects);
-        ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
+        RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(queryMethod, objects);
+        ResultProcessor processor = queryMethod.getResultProcessor().withDynamicProjection(accessor);
 
         JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor);
         MapSqlParameterSource parameterMap = this.bindParameters(accessor);
         String query = evaluateExpressions(objects, accessor.getBindableParameters(), parameterMap);
-        queryExecution = wrapPageableQueryExecution(query, accessor.getPageable(), parameterMap, queryExecution);
-        return queryExecution.execute(enhancePageQuery(query), parameterMap);
+        if (queryMethod.isPageQuery() || queryMethod.isSliceQuery()) {
+            query = enhancePageQuery(query);
+            queryExecution = wrapPageableQueryExecution(query, accessor.getPageable(), parameterMap, queryExecution);
+        }
+        return queryExecution.execute(query, parameterMap);
     }
 
     protected String enhancePageQuery(String query) {

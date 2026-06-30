@@ -42,20 +42,5 @@ public class DynamicQueryJdbcQuery extends PagedSliceJdbcQuery {
         return dynamicSqlRenderer.render(query, bindableParameters, objects);
     }
 
-    @Override
-    protected String enhancePageQuery(String query) {
-        JdbcQueryMethod queryMethod = getQueryMethod();
-        if (queryMethod.isPageQuery() || queryMethod.isSliceQuery()) {
-            return super.enhancePageQuery(query);
-        }
-        return query;
-    }
 
-    @Override
-    protected JdbcQueryExecution<?> wrapPageableQueryExecution(String resolvedSQL, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
-        if (pageable.isPaged()) {
-            return super.wrapPageableQueryExecution(resolvedSQL, pageable, parameterMap, queryExecution);
-        }
-        return queryExecution;
-    }
 }

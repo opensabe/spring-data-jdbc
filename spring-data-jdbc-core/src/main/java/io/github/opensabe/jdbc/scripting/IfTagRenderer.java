@@ -18,6 +18,7 @@ package io.github.opensabe.jdbc.scripting;
 import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
+import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 
@@ -95,14 +96,11 @@ public final class IfTagRenderer {
     private static boolean evaluateTest(String expression, Parameters<?, ?> parameters, Object[] values,
                                         ValueExpressionDelegate delegate) {
 
-//        Expression spelExpression = PARSER.parseExpression(expression);
+        Expression spelExpression = PARSER.parseExpression(expression);
         ValueEvaluationContext evaluationContext = delegate.createValueContextProvider(parameters)
                 .getEvaluationContext(values);
 
-
-//        EvaluationContext evaluationContext = delegate.getEvaluationContext(parameters, values,
-//                );
-        Object value = delegate.parse(expression).evaluate(evaluationContext);
+        Object value = spelExpression.getValue(evaluationContext.getEvaluationContext());
 
         if (value instanceof Boolean bool) {
             return bool;
