@@ -15,17 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.sql.SQLType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.expression.ValueEvaluationContext;
@@ -36,11 +25,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
-import org.springframework.data.repository.query.Parameter;
-import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.ResultProcessor;
-import org.springframework.data.repository.query.ValueExpressionDelegate;
-import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
+import org.springframework.data.repository.query.*;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
@@ -49,6 +34,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.sql.SQLType;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -71,7 +66,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     private final JdbcQueryMethod queryMethod;
     private final JdbcConverter converter;
     private final RowMapperFactory rowMapperFactory;
-    private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
+    protected final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
     private final ValueExpressionDelegate delegate;
 
     private final CachedRowMapperFactory cachedRowMapperFactory;
@@ -124,12 +119,12 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         return queryExecution.execute(enhancePageQuery(query), parameterMap);
     }
 
-    private String enhancePageQuery(String query) {
+    protected String enhancePageQuery(String query) {
         String original = query.trim().replace(";", "");
         return String.format("%s limit :limit offset :offset", original);
     }
 
-    private String evaluateExpressions(Object[] objects, Parameters<?, ?> bindableParameters,
+    protected String evaluateExpressions(Object[] objects, Parameters<?, ?> bindableParameters,
                                        MapSqlParameterSource parameterMap) {
 
         if (parsedQuery.hasParameterBindings()) {
@@ -291,7 +286,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
     }
 
     @SuppressWarnings("unchecked")
-    private JdbcQueryExecution<?> wrapPageableQueryExecution(String resolvedSQL, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
+    protected JdbcQueryExecution<?> wrapPageableQueryExecution(String resolvedSQL, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
         parameterMap.addValue("offset", pageable.getOffset());
         if (queryMethod.isSliceQuery()) {
             parameterMap.addValue("limit", pageable.getPageSize() + 1);

@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
@@ -27,8 +26,8 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 
@@ -37,13 +36,13 @@ import java.lang.reflect.Method;
 public class DynamicJdbcQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
 
-    public DynamicJdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations, @Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-        super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, beanfactory, evaluationContextProvider);
+    public DynamicJdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations, ValueExpressionDelegate delegate) {
+        super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
     }
 
     @Override
     public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory, NamedQueries namedQueries) {
         JdbcQueryMethod jdbcQueryMethod = getJdbcQueryMethod(method, metadata, factory, namedQueries);
-        return new DynamicQueryJdbcQuery(jdbcQueryMethod, getOperations(), this::createMapper, getConverter(), evaluationContextProvider);
+        return new DynamicQueryJdbcQuery(jdbcQueryMethod, getOperations(),this::createMapper, getConverter(),delegate);
     }
 }

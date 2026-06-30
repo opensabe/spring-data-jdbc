@@ -16,8 +16,10 @@
 package org.springframework.data.jdbc.repository.query;
 
 import io.github.opensabe.jdbc.scripting.DynamicSqlRenderer;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -25,18 +27,35 @@ public class DynamicQueryJdbcQuery extends PagedSliceJdbcQuery {
 
     private final DynamicSqlRenderer dynamicSqlRenderer;
 
-    public DynamicQueryJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations, RowMapperFactory rowMapperFactory, JdbcConverter converter, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-        super(queryMethod, operations, rowMapperFactory, converter, evaluationContextProvider);
+    public DynamicQueryJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations, RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
+        super(queryMethod, operations, rowMapperFactory, converter, delegate);
         String query = queryMethod.getDeclaredQuery();
         if (!DynamicSqlRenderer.isDynamic(query)) {
             throw new UnsupportedOperationException("Dynamic queries can only be applied to dynamic queries");
         }
-        this.dynamicSqlRenderer = new DynamicSqlRenderer(evaluationContextProvider);
+        this.dynamicSqlRenderer = new DynamicSqlRenderer(delegate);
     }
 
     @Override
-    protected String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
-        query = dynamicSqlRenderer.render(query, getQueryMethod().getParameters(), objects);
-        return super.processSpelExpressions(objects, parameterMap, query);
+    protected String evaluateExpressions(Object[] objects, Parameters<?, ?> bindableParameters, MapSqlParameterSource parameterMap) {
+        String query =  super.evaluateExpressions(objects, bindableParameters, parameterMap);
+        return dynamicSqlRenderer.render(query, bindableParameters, objects);
+    }
+
+    @Override
+    protected String enhancePageQuery(String query) {
+        JdbcQueryMethod queryMethod = getQueryMethod();
+        if (queryMethod.isPageQuery() || queryMethod.isSliceQuery()) {
+            return super.enhancePageQuery(query);
+        }
+        return query;
+    }
+
+    @Override
+    protected JdbcQueryExecution<?> wrapPageableQueryExecution(String resolvedSQL, Pageable pageable, MapSqlParameterSource parameterMap, JdbcQueryExecution<?> queryExecution) {
+        if (pageable.isPaged()) {
+            return super.wrapPageableQueryExecution(resolvedSQL, pageable, parameterMap, queryExecution);
+        }
+        return queryExecution;
     }
 }

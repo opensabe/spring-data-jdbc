@@ -18,6 +18,7 @@ package io.github.opensabe.jdbc.scripting;
 
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.util.Assert;
 
 /**
@@ -25,15 +26,15 @@ import org.springframework.util.Assert;
  */
 public final class DynamicSqlRenderer {
 
-    private final QueryMethodEvaluationContextProvider evaluationContextProvider;
+    private final ValueExpressionDelegate delegate;
 
-    public DynamicSqlRenderer(QueryMethodEvaluationContextProvider evaluationContextProvider) {
-        Assert.notNull(evaluationContextProvider, "QueryMethodEvaluationContextProvider must not be null");
-        this.evaluationContextProvider = evaluationContextProvider;
+    public DynamicSqlRenderer(ValueExpressionDelegate delegate) {
+        Assert.notNull(delegate, "ValueExpressionDelegate must not be null");
+        this.delegate = delegate;
     }
 
     public String render(String sql, Parameters<?, ?> parameters, Object[] values) {
-        return IfTagRenderer.render(sql, parameters, values, evaluationContextProvider);
+        return IfTagRenderer.render(sql, parameters, values, delegate);
     }
 
     public static boolean isDynamic(String sql) {

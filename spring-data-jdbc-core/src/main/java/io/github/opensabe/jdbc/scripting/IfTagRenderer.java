@@ -15,11 +15,9 @@
  */
 package io.github.opensabe.jdbc.scripting;
 
+import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.data.spel.ExpressionDependencies;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 
@@ -27,7 +25,7 @@ import org.springframework.util.Assert;
  * Renders MyBatis-style {@code <if test="...">} fragments using SpEL for condition evaluation.
  * <p>
  * Only {@code <if>} tags are supported. Fragment bodies may contain nested {@code <if>} tags.
- * SpEL expressions in {@code test} use the same {@link QueryMethodEvaluationContextProvider}
+ * SpEL expressions in {@code test} use the same {@link ValueExpressionDelegate}
  * as Spring Data {@code @Query} ({@code :#{...}}) bindings.
  */
 public final class IfTagRenderer {
@@ -38,22 +36,22 @@ public final class IfTagRenderer {
     }
 
     public static String render(String sql, Parameters<?, ?> parameters, Object[] values,
-            QueryMethodEvaluationContextProvider evaluationContextProvider) {
+                                ValueExpressionDelegate delegate) {
 
         Assert.notNull(sql, "SQL must not be null");
         Assert.notNull(parameters, "Parameters must not be null");
         Assert.notNull(values, "Values must not be null");
-        Assert.notNull(evaluationContextProvider, "QueryMethodEvaluationContextProvider must not be null");
+        Assert.notNull(delegate, "ValueExpressionDelegate must not be null");
 
         if (!DynamicSqlDetector.isDynamic(sql)) {
             return sql;
         }
 
-        return renderInternal(sql, parameters, values, evaluationContextProvider);
+        return renderInternal(sql, parameters, values, delegate);
     }
 
     private static String renderInternal(String sql, Parameters<?, ?> parameters, Object[] values,
-            QueryMethodEvaluationContextProvider evaluationContextProvider) {
+                                         ValueExpressionDelegate delegate) {
 
         StringBuilder result = new StringBuilder(sql.length());
         int index = 0;
@@ -83,9 +81,9 @@ public final class IfTagRenderer {
             int bodyStart = findTagBodyStart(sql, testValueEnd);
             int bodyEnd = findMatchingEndIf(sql, bodyStart);
 
-            if (evaluateTest(testExpression, parameters, values, evaluationContextProvider)) {
+            if (evaluateTest(testExpression, parameters, values, delegate)) {
                 result.append(renderInternal(sql.substring(bodyStart, bodyEnd), parameters, values,
-                        evaluationContextProvider));
+                        delegate));
             }
 
             index = bodyEnd + "</if>".length();
@@ -95,12 +93,16 @@ public final class IfTagRenderer {
     }
 
     private static boolean evaluateTest(String expression, Parameters<?, ?> parameters, Object[] values,
-            QueryMethodEvaluationContextProvider evaluationContextProvider) {
+                                        ValueExpressionDelegate delegate) {
 
-        Expression spelExpression = PARSER.parseExpression(expression);
-        EvaluationContext evaluationContext = evaluationContextProvider.getEvaluationContext(parameters, values,
-                ExpressionDependencies.discover(spelExpression));
-        Object value = spelExpression.getValue(evaluationContext);
+//        Expression spelExpression = PARSER.parseExpression(expression);
+        ValueEvaluationContext evaluationContext = delegate.createValueContextProvider(parameters)
+                .getEvaluationContext(values);
+
+
+//        EvaluationContext evaluationContext = delegate.getEvaluationContext(parameters, values,
+//                );
+        Object value = delegate.parse(expression).evaluate(evaluationContext);
 
         if (value instanceof Boolean bool) {
             return bool;
@@ -146,10 +148,9 @@ public final class IfTagRenderer {
         if (index >= sql.length() || sql.charAt(index) != '=') {
             throw new IllegalArgumentException("Expected '=' after test attribute near index " + ifStart);
         }
-        index++;
-        while (index < sql.length() && Character.isWhitespace(sql.charAt(index))) {
+        do {
             index++;
-        }
+        } while (index < sql.length() && Character.isWhitespace(sql.charAt(index)));
         if (index >= sql.length()) {
             throw new IllegalArgumentException("Unterminated test attribute near index " + ifStart);
         }

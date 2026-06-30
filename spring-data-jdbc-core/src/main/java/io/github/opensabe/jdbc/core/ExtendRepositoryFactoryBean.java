@@ -3,11 +3,11 @@ package io.github.opensabe.jdbc.core;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.support.DynamicJdbcQueryLookupStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.jdbc.repository.support.PagedJdbcQueryLookupStrategy;
@@ -122,10 +122,15 @@ public class ExtendRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
                 return super.getQueryLookupStrategy(key, valueExpressionDelegate).map(s ->
                     (method, metadata, factory, namedQueries) ->{
                     try {
-                        return s.resolveQuery(method, metadata, factory, namedQueries);
-                    }catch (UnsupportedOperationException e) {
-                        return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, new CachingValueExpressionDelegate(valueExpressionDelegate))
+                        return new DynamicJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, new CachingValueExpressionDelegate(valueExpressionDelegate))
                                 .resolveQuery(method, metadata, factory, namedQueries);
+                    }catch (UnsupportedOperationException e1) {
+                        try {
+                            return s.resolveQuery(method, metadata, factory, namedQueries);
+                        }catch (UnsupportedOperationException e) {
+                            return new PagedJdbcQueryLookupStrategy(publisher, entityCallbacks, mappingContext, converter, dialect, queryMappingConfiguration, operations, new CachingValueExpressionDelegate(valueExpressionDelegate))
+                                    .resolveQuery(method, metadata, factory, namedQueries);
+                        }
                     }
                 });
             }
