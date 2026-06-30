@@ -28,6 +28,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         "spring.dynamic.datasource.default[0].username=root",
         "spring.dynamic.datasource.default[0].password=123456",
         "spring.dynamic.datasource.default[0].url=jdbc:mysql://localhost:3306/sys",
+        "spring.dynamic.datasource.default[1].username=root",
+        "spring.dynamic.datasource.default[1].password=123456",
+        "spring.dynamic.datasource.default[1].url=jdbc:mysql://localhost:3306/sys",
 
         "spring.dynamic.datasource.readonly[0].username=root",
         "spring.dynamic.datasource.readonly[0].password=123456",

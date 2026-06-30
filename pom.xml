@@ -112,7 +112,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.7</version>
+                        <version>3.2.8</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -137,7 +137,7 @@
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>ossrh</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
+<!--                            <tokenAuth>true</tokenAuth>-->
                         </configuration>
                     </plugin>
                 </plugins>

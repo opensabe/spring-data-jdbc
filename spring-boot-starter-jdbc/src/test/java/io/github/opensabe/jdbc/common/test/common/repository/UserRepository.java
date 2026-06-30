@@ -27,4 +27,9 @@ public interface UserRepository extends BaseRepository<User, String> {
 
     @Query("select * from t_user where name = :#{#user.name} and age = :#{#user.age}")
     List<User> selectByQuery(User user);
+
+    @Query("""
+        select * from t_user where 1=1 <if test='#user.id != null'> and id = :#{#user.id} </if>
+    """)
+    List<User> selectByDynamic (User user);
 }

@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
  * @author heng.ma
  */
 public class PagedJdbcQueryLookupStrategy extends JdbcQueryLookupStrategy {
+
+
     public PagedJdbcQueryLookupStrategy(ApplicationEventPublisher publisher, EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations, BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
         super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, beanfactory, evaluationContextProvider);
     }

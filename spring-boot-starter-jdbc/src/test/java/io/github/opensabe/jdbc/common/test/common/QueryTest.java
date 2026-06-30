@@ -524,4 +524,15 @@ public class QueryTest extends BaseTest {
                 .extracting(User::getEmail)
                 .containsExactly("email1");
     }
+
+    @Test
+    void testDynamicParam () {
+        User user = new User();
+        user.setId("id1");
+        List<User> users = userRepository.selectByDynamic(user);
+        Assertions.assertEquals(1, users.size());
+        user.setId(null);
+        users = userRepository.selectByDynamic(user);
+        Assertions.assertEquals(100, users.size());
+    }
 }

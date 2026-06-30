@@ -43,7 +43,6 @@ import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.ResultProcessingConverter;
 
@@ -145,7 +144,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         return queryExecution;
     }
 
-    private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
+    protected String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
 
 
         SpelQueryContext.EvaluatingSpelQueryContext queryContext = SpelQueryContext
@@ -216,7 +215,7 @@ public class PagedSliceJdbcQuery extends AbstractJdbcQuery {
         }
     }
 
-    private String determineQuery() {
+    protected String determineQuery() {
 
         String query = queryMethod.getDeclaredQuery();
 
