@@ -32,4 +32,8 @@ public interface UserRepository extends BaseRepository<User, String> {
         select * from t_user where 1=1 <if test='#user.id != null'> and id = :#{#user.id} </if>
     """)
     List<User> selectByDynamic (User user);
+    @Query("""
+        select * from t_user where 1=1 <if test='#ids != null && #ids.size >0'> and id in (:ids) </if>
+    """)
+    List<User> selectByDynamicIn (List<String> ids);
 }

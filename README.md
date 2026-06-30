@@ -22,6 +22,79 @@
 
 ```
 
+## 动态 SQL
+
+在 `@Query` 注解中支持 MyBatis 风格的 `<if test="...">` 动态 SQL 片段。查询方法中若包含 `<if test=` 标签，框架会自动识别并渲染动态 SQL，再执行常规的 SpEL 参数绑定（`:#{#...}`）。
+
+### 基本用法
+
+```java
+
+import io.github.opensabe.jdbc.core.repository.BaseRepository;
+import org.springframework.data.jdbc.repository.query.Query;
+
+public interface UserRepository extends BaseRepository<User, String> {
+
+    @Query("""
+        select * from t_user where 1=1
+        <if test='#user.id != null'> and id = :#{#user.id} </if>
+        <if test='#user.name != null and #user.name != ""'> and name = :#{#user.name} </if>
+        """)
+    List<User> selectByDynamic(User user);
+}
+
+```
+
+当 `user.id` 不为 `null` 时，最终执行的 SQL 类似：
+
+```sql
+select * from t_user where 1=1 and id = ?
+```
+
+条件不满足时，对应的 `<if>` 片段会被移除，不会出现在最终 SQL 中。
+
+### test 表达式
+
+`test` 属性使用 **SpEL** 表达式，求值上下文与 `@Query` 中的 `:#{#...}` 一致，可直接引用方法参数，例如 `#user.id`、`#name`。
+
+`test` 属性值需使用单引号或双引号包裹：
+
+```java
+<if test='#user.id != null'>
+<if test="#user.name != null and #user.name != ''">
+```
+
+条件求值规则：
+
+- 结果为 `Boolean` 时，直接作为真假判断
+- 结果为 `Number` 时，非 0 为真
+- 其他类型时，非 `null` 为真
+
+### 嵌套
+
+`<if>` 标签支持嵌套：
+
+```java
+@Query("""
+    select * from t_user where 1=1
+    <if test='#user.name != null'>
+      <if test='#user.age != null'> and age = :#{#user.age} </if>
+    </if>
+    """)
+List<User> selectByNested(User user);
+
+@Query("""
+            select * from t_user where 1=1 <if test='#ids != null && #ids.size >0'> and id in (:ids) </if>
+        """)
+List<User> selectByDynamicIn (List<String> ids);
+```
+
+### 说明
+
+- 当前仅支持 `<if>` 标签，暂不支持 `<where>`、`<foreach>` 等其他 MyBatis 标签
+- 动态 SQL 渲染在 SpEL 参数解析之前执行，因此 `<if>` 片段内的 `:#{#...}` 仅在条件为真时才会参与绑定
+- 普通 `@Query`（不含 `<if test=`）不受影响，仍走原有查询逻辑
+- 因为spring data参数支持集合类型，因此不需要支持foreach标签
 ## insertSelective
 
 ### 联合主键
