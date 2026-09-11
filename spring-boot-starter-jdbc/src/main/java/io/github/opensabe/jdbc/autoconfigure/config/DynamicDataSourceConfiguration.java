@@ -1,9 +1,7 @@
 package io.github.opensabe.jdbc.autoconfigure.config;
 
 import io.github.opensabe.jdbc.core.RepositoryFactoryBeanCustomizer;
-import io.github.opensabe.jdbc.datasource.aop.ContentNameAdvice;
-import io.github.opensabe.jdbc.datasource.aop.ContentNameAdvisor;
-import io.github.opensabe.jdbc.datasource.aop.ReadOnlyRepositoryFactoryCustomizer;
+import io.github.opensabe.jdbc.datasource.aop.*;
 import io.github.opensabe.jdbc.datasource.support.JdbcNamedContextFactory;
 import io.github.opensabe.jdbc.datasource.support.MultipleDataSourceProperties;
 import io.github.opensabe.jdbc.datasource.support.TransactionManagerBeanFactory;
@@ -37,6 +35,14 @@ public class DynamicDataSourceConfiguration {
     public DynamicDataSourceConfiguration(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
+
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ReadOnlyServiceAdviser readOnlyServiceAdviser() {
+        return new ReadOnlyServiceAdviser(new ReadOnlyServiceAdvice());
+    }
+
 
 
     @Bean

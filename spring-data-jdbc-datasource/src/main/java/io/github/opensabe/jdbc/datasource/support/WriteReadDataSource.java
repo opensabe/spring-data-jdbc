@@ -1,6 +1,7 @@
 package io.github.opensabe.jdbc.datasource.support;
 
 import io.github.opensabe.jdbc.datasource.aop.ReadOnlyRepositoryAdvice;
+import io.github.opensabe.jdbc.datasource.aop.ReadOnlyServiceAdvice;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.lang.Nullable;
 
@@ -23,6 +24,6 @@ public class WriteReadDataSource extends AbstractRoutingDataSource {
 
     @Override
     protected Object determineCurrentLookupKey() {
-        return ReadOnlyRepositoryAdvice.isReadOnly();
+        return ReadOnlyServiceAdvice.isReadOnly() || ReadOnlyRepositoryAdvice.isReadOnly();
     }
 }
