@@ -1,6 +1,6 @@
 package io.github.opensabe.jdbc.datasource.support;
 
-import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -56,13 +56,13 @@ public class MultipleDataSourceProperties {
     }
 
     public static class Properties extends DataSourceProperties {
-        private HikariConfig hikari;
+        private HikariDataSource hikari;
 
-        public HikariConfig getHikari() {
+        public HikariDataSource getHikari() {
             return hikari;
         }
 
-        public void setHikari(HikariConfig hikari) {
+        public void setHikari(HikariDataSource hikari) {
             this.hikari = hikari;
         }
     }
