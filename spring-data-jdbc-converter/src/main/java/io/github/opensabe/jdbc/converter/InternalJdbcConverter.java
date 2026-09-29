@@ -1,6 +1,7 @@
 package io.github.opensabe.jdbc.converter;
 
 import io.github.opensabe.jdbc.core.executor.PropertyAccessorCustomizer;
+import org.springframework.core.ResolvableType;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -40,5 +41,23 @@ public class InternalJdbcConverter extends BasicJdbcConverter {
     @Override
     public <T> PersistentPropertyAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance) {
         return (PersistentPropertyAccessor<T>)propertyAccessorCustomizer.apply(persistentEntity.getPropertyAccessor(instance));
+    }
+
+    @Override
+    public Class<?> getColumnType(RelationalPersistentProperty property) {
+        Converter converter = property.findAnnotation(Converter.class);
+        if (converter == null) {
+            return super.getColumnType(property);
+        }
+
+        Class<?> storeType = ResolvableType.forClass(converter.value())
+                .as(org.springframework.data.convert.PropertyValueConverter.class)
+                .getGeneric(1)
+                .resolve();
+        if (storeType == null || storeType == Object.class) {
+            throw new IllegalStateException(
+                    "Cannot resolve store type for converter " + converter.value().getName());
+        }
+        return storeType;
     }
 }
