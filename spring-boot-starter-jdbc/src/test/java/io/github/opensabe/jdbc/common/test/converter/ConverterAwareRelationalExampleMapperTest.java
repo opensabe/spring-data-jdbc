@@ -13,6 +13,7 @@ import io.github.opensabe.jdbc.converter.SpecifyPropertyConverterFactory;
 import io.github.opensabe.jdbc.core.executor.PropertyAccessorCustomizer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.annotation.Id;
@@ -81,6 +82,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("QBE 参数应绑定转换后的整数零")
     void shouldBindConvertedZeroIntoQueryParameter() {
         Account probe = new Account();
         probe.bank = new BankValue(0);
@@ -91,6 +93,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("自动配置应注册支持 Converter 的 QBE Mapper")
     void shouldConfigureConverterAwareExampleMapper() {
         assertThat(new GenerateConfiguration()
                 .relationalExampleMapper(mappingContext, conversionService))
@@ -98,6 +101,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("查询映射应使用 Converter 的数据库类型")
     void shouldUseConvertedStoreTypeForQueryMapping() {
         RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(Account.class);
 
@@ -108,6 +112,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("QBE 参数应绑定转换后的字符串")
     void shouldBindStringStoreValue() {
         Account probe = new Account();
         probe.payload = new Payload("payload-value");
@@ -119,6 +124,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("值转换器应先于属性 Converter 执行")
     void shouldApplyValueTransformerBeforePropertyConverter() {
         Account probe = new Account();
         probe.bank = new BankValue(0);
@@ -134,6 +140,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("全条件匹配应以 AND 组合普通字段和 Converter 字段")
     void shouldCombineNormalAndConverterPropertiesWithAnd() {
         Account probe = new Account();
         probe.userId = "user-1";
@@ -148,6 +155,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("任一条件匹配应以 OR 组合普通字段和 Converter 字段")
     void shouldCombineNormalAndConverterPropertiesWithOr() {
         Account probe = new Account();
         probe.userId = "user-1";
@@ -161,6 +169,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("被忽略的 Converter 字段不应进入 QBE")
     void shouldHonorIgnoredConverterPath() {
         Account probe = new Account();
         probe.bank = new BankValue(0);
@@ -177,6 +186,7 @@ class ConverterAwareRelationalExampleMapperTest {
     }
 
     @Test
+    @DisplayName("真正的 Reference 字段仍不应进入 QBE")
     void shouldKeepRealReferenceOutOfQueryByExample() {
         Account probe = new Account();
         probe.owner = new Owner("owner-1");

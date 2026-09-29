@@ -70,6 +70,10 @@ public class ConverterAwareRelationalExampleMapper extends RelationalExampleMapp
             converterCriteria.add(criteria);
         });
 
+        if (converterCriteria.isEmpty()) {
+            return mappedQuery;
+        }
+
         Criteria criteria = Criteria.empty();
         if (mappedQuery.getCriteria().isPresent()) {
             criteria = criteria.and(mappedQuery.getCriteria().get());

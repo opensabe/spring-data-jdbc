@@ -3,6 +3,7 @@ create table sys.t_activity (
     config json,
     platforms json,
     times json,
+    bank int,
     online tinyint,
     primary key (id)
 );
