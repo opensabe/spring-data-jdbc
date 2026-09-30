@@ -2,6 +2,7 @@ package io.github.opensabe.jdbc.converter;
 
 import org.springframework.data.convert.PropertyValueConversionService;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
@@ -56,6 +57,12 @@ public class ConverterAwareRelationalExampleMapper extends RelationalExampleMapp
 
             Object storeValue = conversionService.write(
                     transformedValue.get(), property, new DefaultValueConversionContext<>(property));
+            if (storeValue == null) {
+                if (matcherAccessor.getNullHandler() == ExampleMatcher.NullHandler.INCLUDE) {
+                    converterCriteria.add(Criteria.where(property.getName()).isNull());
+                }
+                return;
+            }
             boolean ignoreCase = matcherAccessor.isIgnoreCaseForPath(property.getName());
             String column = property.getName();
 

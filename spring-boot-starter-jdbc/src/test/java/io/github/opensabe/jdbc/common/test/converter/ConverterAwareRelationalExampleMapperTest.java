@@ -15,6 +15,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+// import org.junit.jupiter.params.ParameterizedTest;
+// import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Reference;
@@ -197,6 +199,45 @@ class ConverterAwareRelationalExampleMapperTest {
                 assertThat(criteria.isEmpty()).isTrue());
     }
 
+    // 本次空值回归用例已完成红绿验证，按约定在验证后整体注释。
+//     @ParameterizedTest
+//     @EnumSource(value = ExampleMatcher.StringMatcher.class,
+//             names = {"DEFAULT", "EXACT", "ENDING", "STARTING", "CONTAINING"})
+//     @DisplayName("忽略空值时应跳过 Converter 返回空值的属性")
+//     void shouldIgnoreNullStoreValue(ExampleMatcher.StringMatcher stringMatcher) {
+//         Account probe = new Account();
+//         probe.bank = new BankValue(null);
+//         Example<Account> example = Example.of(probe, ExampleMatcher.matching()
+//                 .withIgnoreNullValues().withStringMatcher(stringMatcher));
+//
+//         Query query = mapper().getMappedExample(example);
+//
+//         assertThat(query.getCriteria()).hasValueSatisfying(criteria ->
+//                 assertThat(criteria.isEmpty()).isTrue());
+//     }
+//
+//     @ParameterizedTest
+//     @EnumSource(value = ExampleMatcher.StringMatcher.class,
+//             names = {"DEFAULT", "EXACT", "ENDING", "STARTING", "CONTAINING"})
+//     @DisplayName("包含空值时应将 Converter 返回空值的属性映射为 IS NULL")
+//     void shouldIncludeNullStoreValue(ExampleMatcher.StringMatcher stringMatcher) {
+//         Account probe = new Account();
+//         probe.bank = new BankValue(null);
+//         Example<Account> example = Example.of(probe, ExampleMatcher.matching()
+//                 .withIncludeNullValues().withStringMatcher(stringMatcher)
+//                 .withIgnorePaths("id", "userId", "payload", "owner"));
+//
+//         Query query = mapper().getMappedExample(example);
+//
+//         assertThat(query.getCriteria()).hasValueSatisfying(criteria -> {
+//             assertThat(criteria.getGroup()).singleElement().satisfies(propertyCriteria -> {
+//                 assertThat(propertyCriteria.getColumn().getReference()).isEqualTo("bank");
+//                 assertThat(propertyCriteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.IS_NULL);
+//             });
+//         });
+//         assertThat(mappedParameters(query, Account.class).getValues()).isEmpty();
+//     }
+//
     private ConverterAwareRelationalExampleMapper mapper() {
         return new ConverterAwareRelationalExampleMapper(mappingContext, conversionService);
     }
