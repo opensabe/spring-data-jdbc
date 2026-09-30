@@ -1,15 +1,20 @@
 package io.github.opensabe.jdbc.common.test.json;
 
 import io.github.opensabe.jdbc.common.test.BaseTest;
+import io.github.opensabe.jdbc.common.test.converter.BankValue;
+import io.github.opensabe.jdbc.common.test.converter.BankValueConverter;
 import io.github.opensabe.jdbc.common.test.json.repository.ActivityRepository;
 import io.github.opensabe.jdbc.common.test.json.service.ActivityService;
 import io.github.opensabe.jdbc.common.test.vo.Activity;
 import io.github.opensabe.jdbc.core.EnableJdbcRepositories;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +25,7 @@ import java.util.Optional;
  * @author heng.ma
  */
 
-@Import(ActivityService.class)
+@Import({ActivityService.class, BankValueConverter.class})
 @EnableJdbcRepositories(basePackageClasses = ActivityRepository.class)
 public class JsonPropertyTest extends BaseTest {
 
@@ -152,5 +157,33 @@ public class JsonPropertyTest extends BaseTest {
                         a -> a.getTimes().get("m1"),
                         a -> a.getTimes().get("m2")
                 ).contains(List.of("p1", "p2"), "k1", "v1", true, false);
+    }
+
+    @Test
+    @DisplayName("QBE 应使用转换后的整数零作为查询条件")
+    void testQueryByExampleWithConvertedZero() {
+        Activity bankZero = new Activity();
+        bankZero.setId("qbe-bank-zero");
+        bankZero.setOnline(true);
+        bankZero.setBank(new BankValue(0));
+
+        Activity bankOne = new Activity();
+        bankOne.setId("qbe-bank-one");
+        bankOne.setOnline(true);
+        bankOne.setBank(new BankValue(1));
+
+        repository.insertList(List.of(bankZero, bankOne));
+
+        Activity probe = new Activity();
+        probe.setOnline(true);
+        probe.setBank(new BankValue(0));
+
+        List<Activity> result = repository.findAll(Example.of(
+                probe,
+                ExampleMatcher.matching().withIgnoreNullValues()));
+
+        Assertions.assertThat(result)
+                .extracting(Activity::getId)
+                .containsExactly("qbe-bank-zero");
     }
 }

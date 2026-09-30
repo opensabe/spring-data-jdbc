@@ -1,5 +1,7 @@
 package io.github.opensabe.jdbc.common.test.vo;
 
+import io.github.opensabe.jdbc.common.test.converter.BankValue;
+import io.github.opensabe.jdbc.common.test.converter.BankValueConverter;
 import io.github.opensabe.jdbc.converter.Converter;
 import io.github.opensabe.jdbc.converter.extension.JsonPropertyValueConverter;
 import org.springframework.data.annotation.Id;
@@ -26,6 +28,9 @@ public class Activity {
 
     @Converter(JsonPropertyValueConverter.class)
     private Map<String, Boolean> times;
+
+    @Converter(BankValueConverter.class)
+    private BankValue bank;
 
     private Boolean online;
 
@@ -67,6 +72,14 @@ public class Activity {
 
     public void setOnline(Boolean online) {
         this.online = online;
+    }
+
+    public BankValue getBank() {
+        return bank;
+    }
+
+    public void setBank(BankValue bank) {
+        this.bank = bank;
     }
 
     public static class Config {

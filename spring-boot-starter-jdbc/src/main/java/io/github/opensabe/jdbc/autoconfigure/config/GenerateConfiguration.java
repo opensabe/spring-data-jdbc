@@ -6,6 +6,7 @@ import io.github.opensabe.jdbc.core.executor.CustomerJdbcOperationImpl;
 import io.github.opensabe.jdbc.core.executor.ExtendSQLGeneratorSource;
 import io.github.opensabe.jdbc.core.executor.PropertyAccessorCustomizer;
 import io.github.opensabe.jdbc.core.jackson.PageSerializeModule;
+import io.github.opensabe.jdbc.converter.ConverterAwareRelationalExampleMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -48,8 +49,10 @@ public class GenerateConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RelationalExampleMapper relationalExampleMapper (RelationalMappingContext context) {
-        return new RelationalExampleMapper(context);
+    public RelationalExampleMapper relationalExampleMapper (
+            RelationalMappingContext context,
+            PropertyValueConversionService conversionService) {
+        return new ConverterAwareRelationalExampleMapper(context, conversionService);
     }
 
     @Bean

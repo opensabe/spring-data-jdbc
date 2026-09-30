@@ -148,7 +148,7 @@ public class JsonPropertyValueConverter implements InternalPropertyValueConverte
 }
 
 ```
-2. 在实体类升添加注解 @Converter，并指定转换器
+2. 在实体类上添加注解 @Converter，并指定转换器
 
 ```java
 
@@ -180,3 +180,25 @@ public class Activity {
 }
 
 ```
+
+3. 在 Query by Example 中使用转换属性
+
+从 `1.1.3` 开始，使用 `Example` 查询时，标记 `@Converter` 的属性会先通过对应的
+`PropertyValueConverter#write` 转换为数据库值，再参与查询条件。
+
+```java
+
+Activity probe = new Activity();
+probe.setOnline(true);
+probe.setConfig(new Activity.Config("key", "value"));
+
+ExampleMatcher matcher = ExampleMatcher.matchingAll()
+        .withIgnoreNullValues();
+
+List<Activity> result = repository.findAll(Example.of(probe, matcher));
+
+```
+
+上述查询会同时包含普通属性 `online` 和转换属性 `config`。转换属性同样遵循
+`ExampleMatcher` 的 ignored path、value transformer、`matchingAll` 和 `matchingAny`
+配置。普通 `@Reference` 关联属性不会参与 Query by Example。
