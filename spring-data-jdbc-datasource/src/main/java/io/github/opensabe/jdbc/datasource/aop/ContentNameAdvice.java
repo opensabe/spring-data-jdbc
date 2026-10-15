@@ -21,15 +21,17 @@ public class ContentNameAdvice implements MethodInterceptor {
         return CONTENT_NAME_HOLDER.get();
     }
 
-    private Map<MethodInvocation, String> cache = new ConcurrentHashMap<>();
+    private final Map<Object, String> cache = new ConcurrentHashMap<>();
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         if (StringUtils.hasText(CONTENT_NAME_HOLDER.get())) {
             return invocation.proceed();
         }
-        String name = cache.computeIfAbsent(invocation, k -> {
-            if (invocation.getThis() instanceof BaseService service) {
+        // name 来自当前 service 实例的 repository，按目标对象缓存。MethodInvocation 每次调用都是新对象，不能当 key
+        Object target = invocation.getThis();
+        String name = target == null ? "default" : cache.computeIfAbsent(target, k -> {
+            if (k instanceof BaseService service) {
                 return ((RepositoryBootConfig)service.getRepository()).getConfig().getAttribute("name", String.class).orElse("default");
             }
             return "default";

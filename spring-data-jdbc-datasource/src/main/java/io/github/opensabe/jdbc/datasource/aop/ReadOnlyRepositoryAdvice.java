@@ -37,20 +37,22 @@ public class ReadOnlyRepositoryAdvice implements MethodInterceptor {
     public Object invoke(MethodInvocation invocation) throws Throwable {
         //该Advice在最前面，因此在repository开启事务之前判断是否在事务中，如果在事务中，说明事务是在Service开启的
         //service开启的事务不切换数据源
-        boolean isReadOnly = cache.computeIfAbsent(invocation.getMethod(), k -> {
-            boolean active = TransactionSynchronizationManager.isSynchronizationActive();
-            if (active) {
-                return false;
-            }
+        boolean active = TransactionSynchronizationManager.isSynchronizationActive();
+        boolean isReadOnly;
+        if (active) {
+            isReadOnly = false;
+        } else {
             Method method = invocation.getMethod();
-            ReadOnly readOnly = AnnotatedElementUtils.findMergedAnnotation(method, ReadOnly.class);
-            boolean read = Objects.nonNull(readOnly);
-            if (!read) {
-                Query query = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
-                read = Objects.nonNull(query) && containsReadOnly(query.value());
-            }
-            return read;
-        });
+            isReadOnly = cache.computeIfAbsent(method, k -> {
+                ReadOnly readOnly = AnnotatedElementUtils.findMergedAnnotation(method, ReadOnly.class);
+                boolean read = Objects.nonNull(readOnly);
+                if (!read) {
+                    Query query = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
+                    read = Objects.nonNull(query) && containsReadOnly(query.value());
+                }
+                return read;
+            });
+        }
         try {
             READ_ONLY_HOLDER.set(isReadOnly);
             return invocation.proceed();
