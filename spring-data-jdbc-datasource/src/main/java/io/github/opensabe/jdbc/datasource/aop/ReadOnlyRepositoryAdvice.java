@@ -23,7 +23,7 @@ public class ReadOnlyRepositoryAdvice implements MethodInterceptor {
 
     private final static ThreadLocal<Boolean> READ_ONLY_HOLDER = new ThreadLocal<>();
 
-    private Map<Method, Boolean> cache = new ConcurrentHashMap<>();
+    private final Map<Method, Boolean> cache = new ConcurrentHashMap<>();
 
     public static boolean containsReadOnly (String sql) {
         return sql.toLowerCase(Locale.ROOT).contains("/*#mode=readonly*/");
