@@ -23,7 +23,7 @@ public class ReadOnlyRepositoryAdvice implements MethodInterceptor {
 
     private final static ThreadLocal<Boolean> READ_ONLY_HOLDER = new ThreadLocal<>();
 
-    private Map<MethodInvocation, Boolean> cache = new ConcurrentHashMap<>();
+    private Map<Method, Boolean> cache = new ConcurrentHashMap<>();
 
     public static boolean containsReadOnly (String sql) {
         return sql.toLowerCase(Locale.ROOT).contains("/*#mode=readonly*/");
@@ -37,7 +37,7 @@ public class ReadOnlyRepositoryAdvice implements MethodInterceptor {
     public Object invoke(MethodInvocation invocation) throws Throwable {
         //该Advice在最前面，因此在repository开启事务之前判断是否在事务中，如果在事务中，说明事务是在Service开启的
         //service开启的事务不切换数据源
-        boolean isReadOnly = cache.computeIfAbsent(invocation, k -> {
+        boolean isReadOnly = cache.computeIfAbsent(invocation.getMethod(), k -> {
             boolean active = TransactionSynchronizationManager.isSynchronizationActive();
             if (active) {
                 return false;
